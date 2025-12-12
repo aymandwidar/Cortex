@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Mobile API Connection</title>
+</head>
+<body>
+    <h1>Test Mobile API Connection</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'https://cortex-v25-cloud-native.onrender.com';
+        const MASTER_KEY = 'ad222333';
+        const results = document.getElementById('results');
+        
+        function log(message) {
+            results.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        async function testConnection() {
+            log('🚀 Testing mobile API connection...');
+            
+            // Test 1: Health check
+            try {
+                log('🔍 Testing health endpoint...');
+                const healthResponse = await fetch(`${API_BASE_URL}/health`);
+                log(`Health Status: ${healthResponse.status}`);
+                const healthData = await healthResponse.text();
+                log(`Health Response: ${healthData}`);
+            } catch (error) {
+                log(`❌ Health check failed: ${error.message}`);
+            }
+            
+            // Test 2: Generate API key (what Playground does)
+            try {
+                log('🔑 Testing generate API key...');
+                const keyResponse = await fetch(`${API_BASE_URL}/admin/v1/generate_key`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${MASTER_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'Browser Test Key',
+                        user_id: 'browser-test',
+                        metadata: { purpose: 'browser-testing' }
+                    })
+                });
+                
+                log(`Generate Key Status: ${keyResponse.status}`);
+                
+                if (keyResponse.ok) {
+                    const keyData = await keyResponse.json();
+                    log(`✅ API key created: ${keyData.key.substring(0, 10)}...`);
+                    
+                    // Test 3: Chat with generated key
+                    try {
+                        log('💬 Testing chat endpoint...');
+                        const chatResponse = await fetch(`${API_BASE_URL}/v1/chat/completions`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${keyData.key}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                model: 'auto',
+                                messages: [
+                                    { role: 'user', content: 'Hello from browser test!' }
+                                ]
+                            })
+                        });
+                        
+                        log(`Chat Status: ${chatResponse.status}`);
+                        
+                        if (chatResponse.ok) {
+                            const chatData = await chatResponse.json();
+                            log(`✅ Chat working! Model: ${chatData.model}`);
+                            log(`Response: ${chatData.choices[0].message.content.substring(0, 100)}...`);
+                        } else {
+                            const errorText = await chatResponse.text();
+                            log(`❌ Chat failed: ${errorText}`);
+                        }
+                    } catch (error) {
+                        log(`❌ Chat test failed: ${error.message}`);
+                    }
+                } else {
+                    const errorText = await keyResponse.text();
+                    log(`❌ Generate key failed: ${errorText}`);
+                }
+            } catch (error) {
+                log(`❌ Generate key failed: ${error.message}`);
+            }
+        }
+        
+        // Run test when page loads
+        testConnection();
+    </script>
+</body>
+</html>

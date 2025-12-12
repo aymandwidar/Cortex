@@ -34,7 +34,8 @@ export default function Settings({ masterKey }: SettingsProps) {
 
   const fetchProviders = async () => {
     try {
-      const response = await fetch('/admin/v1/settings/providers', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/admin/v1/settings/providers`, {
         headers: { 'Authorization': `Bearer ${masterKey}` }
       })
       if (response.ok) {
@@ -51,7 +52,8 @@ export default function Settings({ masterKey }: SettingsProps) {
   const handleAddProvider = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch('/admin/v1/settings/providers', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/admin/v1/settings/providers`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${masterKey}`,
@@ -76,7 +78,8 @@ export default function Settings({ masterKey }: SettingsProps) {
 
   const handleUpdateProvider = async (providerName: string) => {
     try {
-      const response = await fetch(`/admin/v1/settings/providers/${providerName}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/admin/v1/settings/providers/${providerName}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${masterKey}`,
@@ -105,7 +108,8 @@ export default function Settings({ masterKey }: SettingsProps) {
     if (!confirm(`Are you sure you want to delete ${providerName}?`)) return
 
     try {
-      const response = await fetch(`/admin/v1/settings/providers/${providerName}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/admin/v1/settings/providers/${providerName}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${masterKey}` }
       })
