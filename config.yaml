@@ -45,24 +45,24 @@ agentic_models:
     max_tokens: 1000
     temperature: 0.3
     
-  # The Deep Thinker - System Architecture & Complex Logic
+  # 2. The Logic/Architecture Specialist (DeepSeek - Official ID)
   worker_logic:
-    model: openrouter/deepseek/deepseek-r1
-    provider: openrouter
-    role: "System architecture and deep reasoning"
-    description: "DeepSeek R1 with Chain-of-Thought reasoning for complex logic puzzles and system design"
+    model: "openrouter/deepseek/deepseek-r1"
+    provider: "openrouter"
+    role: "Deep Reasoning"
+    description: "DeepSeek R1 - Official OpenRouter ID for system architecture and complex logic"
     max_tokens: 4000
     temperature: 0.1
     supports_tools: true
     fallbacks:
       - model: groq/llama-3.3-70b-versatile
     
-  # The Math Specialist - STEM & Optimization Expert
+  # 3. The Math Specialist (Qwen - Official ID)
   worker_math:
-    model: openrouter/qwen/qwen-2.5-72b-instruct
-    provider: openrouter
-    role: "Mathematical computations and optimization"
-    description: "Qwen 2.5 72B - Superior MATH benchmark performance (~85%) for complex calculations"
+    model: "openrouter/qwen/qwen-2.5-72b-instruct"
+    provider: "openrouter"
+    role: "Math Optimization"
+    description: "Qwen 2.5 72B - Official OpenRouter ID for superior MATH benchmark performance"
     max_tokens: 3000
     temperature: 0.0
     supports_tools: true
