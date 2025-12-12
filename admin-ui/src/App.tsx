@@ -1,49 +1,66 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
-import Layout from './components/Layout'
-import Dashboard from './pages/Dashboard'
-import ApiKeys from './pages/ApiKeys'
-import Models from './pages/Models'
-import Metrics from './pages/Metrics'
-import Analytics from './pages/Analytics'
-import Settings from './pages/Settings'
-import Playground from './pages/Playground'
-import Login from './pages/Login'
+import { useState, useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import MobileLayout from './layouts/MobileLayout'
+import DesktopLayout from './layouts/DesktopLayout'
+import { useIsMobile } from './hooks/useIsMobile'
+import { ThemeProvider } from './contexts/ThemeContext'
+import { AuthProvider } from './contexts/AuthContext'
+import { AgentProvider } from './contexts/AgentContext'
 
 function App() {
-  const [masterKey, setMasterKey] = useState<string | null>(
-    localStorage.getItem('cortex_master_key')
-  )
+  const isMobile = useIsMobile()
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleLogin = (key: string) => {
-    localStorage.setItem('cortex_master_key', key)
-    setMasterKey(key)
-  }
+  useEffect(() => {
+    // Simulate app initialization
+    const timer = setTimeout(() => setIsLoading(false), 1000)
+    return () => clearTimeout(timer)
+  }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem('cortex_master_key')
-    setMasterKey(null)
-  }
-
-  if (!masterKey) {
-    return <Login onLogin={handleLogin} />
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-panel p-8 text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-2 border-white/20 border-t-white/60 rounded-full mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold text-white mb-2">CORTEX OS</h1>
+          <p className="text-white/70">Initializing Intelligence...</p>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
-    <BrowserRouter>
-      <Layout onLogout={handleLogout}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/keys" element={<ApiKeys masterKey={masterKey} />} />
-          <Route path="/models" element={<Models masterKey={masterKey} />} />
-          <Route path="/analytics" element={<Analytics masterKey={masterKey} />} />
-          <Route path="/metrics" element={<Metrics />} />
-          <Route path="/settings" element={<Settings masterKey={masterKey} />} />
-          <Route path="/playground" element={<Playground masterKey={masterKey} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <AgentProvider>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isMobile ? 'mobile' : 'desktop'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="min-h-screen"
+            >
+              <Routes>
+                <Route path="/*" element={
+                  isMobile ? <MobileLayout /> : <DesktopLayout />
+                } />
+              </Routes>
+            </motion.div>
+          </AnimatePresence>
+        </AgentProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

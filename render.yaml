@@ -10,6 +10,8 @@ services:
     envVars:
       - key: KIRIO_CORTEX_MASTER_KEY
         value: ad222333
+      - key: OPENROUTER_API_KEY
+        value: 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
       - key: LITELLM_CONFIG_PATH
         value: config.yaml
       - key: LOG_LEVEL

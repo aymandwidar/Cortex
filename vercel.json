@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://your-backend-url.com/api/$1"
+      "dest": "https://cortex-v25-cloud-native.onrender.com/$1"
     },
     {
       "src": "/(.*)",
@@ -20,6 +20,6 @@
     }
   ],
   "env": {
-    "VITE_API_BASE_URL": "https://your-backend-url.com"
+    "VITE_API_BASE_URL": "https://cortex-v25-cloud-native.onrender.com"
   }
 }
