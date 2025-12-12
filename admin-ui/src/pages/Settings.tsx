@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Save, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
 import './Settings.css'
 
 interface SettingsProps {

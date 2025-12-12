@@ -207,7 +207,7 @@ export default function Analytics({ masterKey }: AnalyticsProps) {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {modelUsage.map((entry, index) => (
+                {modelUsage.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
