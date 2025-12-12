@@ -34,7 +34,7 @@ model_list:
     fallbacks:
       - model: groq/llama-3.1-70b-versatile
 
-# V2 Agentic System - Specialized Worker Agents
+# V2 Agentic System - SPECIALIST DREAM STACK
 agentic_models:
   # The Manager - Fast task breakdown and orchestration
   orchestrator:
@@ -45,29 +45,52 @@ agentic_models:
     max_tokens: 1000
     temperature: 0.3
     
-  # The Coder - Chain of thought reasoning with self-correction
+  # The Deep Thinker - System Architecture & Complex Logic
   worker_logic:
+    model: openrouter/deepseek/deepseek-r1
+    provider: openrouter
+    role: "System architecture and deep reasoning"
+    description: "DeepSeek R1 with Chain-of-Thought reasoning for complex logic puzzles and system design"
+    max_tokens: 4000
+    temperature: 0.1
+    supports_tools: true
+    fallbacks:
+      - model: groq/llama-3.3-70b-versatile
+    
+  # The Math Specialist - STEM & Optimization Expert
+  worker_math:
+    model: openrouter/qwen/qwen-2.5-72b-instruct
+    provider: openrouter
+    role: "Mathematical computations and optimization"
+    description: "Qwen 2.5 72B - Superior MATH benchmark performance (~85%) for complex calculations"
+    max_tokens: 3000
+    temperature: 0.0
+    supports_tools: true
+    fallbacks:
+      - model: groq/llama-3.3-70b-versatile
+      
+  # The Standard Coder - Fast & Reliable Code Generation
+  worker_analyst:
     model: groq/llama-3.3-70b-versatile
     provider: groq
-    role: "Code generation and logical reasoning"
-    description: "Chain of thought reasoning with self-correction capabilities (FREE)"
+    role: "Standard code generation and debugging"
+    description: "Groq Llama 3.3 70B - Excellent for Python/JS/React with fast inference"
     max_tokens: 4000
     temperature: 0.1
     supports_tools: true
     fallbacks:
       - model: groq/llama-3.1-8b-instant
-    
-  # The Math Wiz - Higher accuracy on STEM/Calculus
-  worker_math:
-    model: groq/llama-3.3-70b-versatile
+      
+  # The Reflex Agent - Ultra-fast Simple Chat
+  worker_reflex:
+    model: groq/llama-3.1-8b-instant
     provider: groq
-    role: "Mathematical computations and STEM problems"
-    description: "Specialized for mathematical reasoning and calculations (FREE)"
-    max_tokens: 2000
-    temperature: 0.0
-    supports_tools: true
+    role: "Simple chat and quick responses"
+    description: "Ultra-fast Llama 8B for simple conversations and UI interactions"
+    max_tokens: 1000
+    temperature: 0.7
     fallbacks:
-      - model: groq/llama-3.1-8b-instant
+      - model: groq/llama-3.3-70b-versatile
     
   # The Eye (Pro) - Complex image analysis
   worker_vision_pro:

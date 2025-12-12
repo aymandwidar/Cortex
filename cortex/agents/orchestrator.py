@@ -137,7 +137,11 @@ class Orchestrator:
                 # Database and schema design (complex reasoning)
                 r"design.*database", r"design.*schema", r"schema.*design", r"data.*model",
                 r"entity.*relationship", r"erd", r"normalization", r"denormalization",
-                r"database.*architecture", r"data.*architecture"
+                r"database.*architecture", r"data.*architecture",
+                
+                # Logic puzzles and riddles (complex reasoning)
+                r"riddle", r"puzzle", r"logic.*puzzle", r"water.*jug", r"brain.*teaser",
+                r"solve.*riddle", r"solve.*puzzle"
             ]
         }
         
@@ -268,7 +272,18 @@ class Orchestrator:
         
         # Apply priority rules for tie-breaking and special cases
         
-        # PRIORITY 1: Math/Business Logic (if score >= 2 or specific high-value patterns)
+        # PRIORITY 1: System Design & Architecture (HIGHEST PRIORITY - takes precedence over everything)
+        # Check for COMPLEX_REASONING patterns first, regardless of score
+        if any(re.search(pattern, user_message_lower) for pattern in [
+               r"architecture", r"system.*design", r"microservices", r"database.*design",
+               r"design.*database", r"design.*schema", r"schema.*design",
+               r"scalability", r"enterprise", r"infrastructure", r"deployment.*strategy",
+               r"kubernetes", r"aws", r"cloud.*architecture", r"distributed.*system",
+               r"riddle", r"puzzle", r"logic.*puzzle", r"water.*jug", r"analysis"
+           ]) or (best_task_type == TaskType.COMPLEX_REASONING and best_score >= 1):
+            return TaskType.COMPLEX_REASONING
+        
+        # PRIORITY 2: Math/Business Logic (if score >= 2 or specific high-value patterns)
         if (best_task_type == TaskType.MATH_CALCULATION and best_score >= 2) or \
            any(re.search(pattern, user_message_lower) for pattern in [
                r"calculate", r"solve.*this", r"step.*by.*step", r"optimize", 
@@ -276,16 +291,6 @@ class Orchestrator:
                r"total.*cost", r"profit", r"loss", r"percentage"
            ]):
             return TaskType.MATH_CALCULATION
-        
-        # PRIORITY 2: System Design & Architecture (takes precedence over coding)
-        if (best_task_type == TaskType.COMPLEX_REASONING and best_score >= 1) or \
-           any(re.search(pattern, user_message_lower) for pattern in [
-               r"architecture", r"system.*design", r"microservices", r"database.*design",
-               r"design.*database", r"design.*schema", r"schema.*design",
-               r"scalability", r"enterprise", r"infrastructure", r"deployment.*strategy",
-               r"kubernetes", r"aws", r"cloud.*architecture", r"distributed.*system"
-           ]):
-            return TaskType.COMPLEX_REASONING
         
         # PRIORITY 3: Code Generation (if score >= 2 or specific coding patterns)
         if (best_task_type == TaskType.CODE_GENERATION and best_score >= 2) or \
@@ -321,8 +326,9 @@ class Orchestrator:
         }
         
         if task_type == TaskType.CODE_GENERATION:
+            # SPECIALIST: Standard Coding → Groq Llama 3.3 70B (Fast & Reliable)
             plan.update({
-                "worker": "worker_logic",
+                "worker": "worker_analyst",
                 "requires_tools": True,
                 "max_iterations": 3,
                 "strategy": "self_correcting_coder",
@@ -330,6 +336,7 @@ class Orchestrator:
             })
             
         elif task_type == TaskType.MATH_CALCULATION:
+            # SPECIALIST: Complex Math → Qwen 2.5 72B (Superior MATH benchmarks)
             plan.update({
                 "worker": "worker_math",
                 "requires_tools": True,
@@ -349,6 +356,7 @@ class Orchestrator:
             })
             
         elif task_type == TaskType.COMPLEX_REASONING:
+            # SPECIALIST: System Design & Deep Logic → DeepSeek R1 (Chain of Thought)
             plan.update({
                 "worker": "worker_logic",
                 "requires_tools": False,
@@ -357,8 +365,9 @@ class Orchestrator:
             })
             
         else:  # SIMPLE_CHAT
+            # SPECIALIST: Simple Chat → Groq Llama 8B (Ultra-fast)
             plan.update({
-                "worker": "orchestrator",
+                "worker": "worker_reflex",
                 "requires_tools": False,
                 "max_iterations": 1,
                 "strategy": "direct_response"
