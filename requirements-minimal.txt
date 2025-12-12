@@ -1,0 +1,32 @@
+# Ultra-minimal requirements for Render Free Tier (512MB limit)
+# Removes heavy AI components to fit memory constraints
+
+# Core FastAPI stack
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-multipart>=0.0.6
+httpx>=0.25.0
+structlog>=23.2.0
+pyyaml>=6.0
+
+# Database
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.19.0
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.0
+
+# LiteLLM (lightweight)
+litellm>=1.0.0
+
+# Basic utilities
+vaderSentiment>=3.3.2
+prometheus-client>=0.19.0
+cryptography>=41.0.0
+
+# Remove heavy components:
+# - sentence-transformers (200MB+)
+# - torch/torchvision (300MB+)
+# - qdrant-client (heavy)
+# - redis (not essential for basic functionality)

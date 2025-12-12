@@ -1,10 +1,17 @@
 """Memory summarization using LLM."""
 
 from typing import Dict, Optional
-import litellm
 import structlog
 
 logger = structlog.get_logger()
+
+# Optional imports for memory features
+try:
+    import litellm
+    LITELLM_AVAILABLE = True
+except ImportError:
+    logger.warning("litellm_not_available", message="Memory features disabled")
+    LITELLM_AVAILABLE = False
 
 
 class MemorySummarizer:
@@ -41,6 +48,10 @@ Fact:"""
         Returns:
             Summarized fact string or None if summarization fails
         """
+        if not LITELLM_AVAILABLE:
+            logger.debug("summarization_skipped", reason="litellm_not_available")
+            return None
+            
         if not conversation:
             return None
         

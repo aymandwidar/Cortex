@@ -1,12 +1,22 @@
 """Memory manager for cross-application context storage and retrieval."""
 
+import os
 from typing import List, Optional, Dict
 from datetime import datetime, timezone
 import uuid
-from sentence_transformers import SentenceTransformer
+import structlog
+
+# Cloud-native imports
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
-import structlog
+
+# BRAIN TRANSPLANT: Use LiteLLM for cloud embeddings instead of local models
+try:
+    from litellm import embedding
+    LITELLM_AVAILABLE = True
+except ImportError:
+    logger.warning("litellm_not_available", message="Memory features disabled")
+    LITELLM_AVAILABLE = False
 
 from cortex.config import settings
 
@@ -17,33 +27,35 @@ class MemoryManager:
     """
     Manages storage and retrieval of cross-application context using Vector Database.
     
-    Uses Qdrant for vector storage and sentence-transformers for embeddings.
+    BRAIN TRANSPLANT: Uses Qdrant for vector storage and LiteLLM cloud embeddings.
     """
     
     def __init__(
         self,
         qdrant_url: Optional[str] = None,
         collection_name: Optional[str] = None,
-        embedding_model: str = "all-MiniLM-L6-v2"
+        embedding_model: str = "text-embedding-3-small"
     ):
         """
-        Initialize memory manager.
+        Initialize memory manager with cloud embeddings.
         
         Args:
             qdrant_url: Qdrant server URL (defaults to settings)
             collection_name: Collection name (defaults to settings)
-            embedding_model: Sentence transformer model name
+            embedding_model: Cloud embedding model (OpenAI, Google, etc.)
         """
         self.qdrant_url = qdrant_url or settings.qdrant_url
         self.collection_name = collection_name or settings.qdrant_collection
         self._client: Optional[QdrantClient] = None
-        self._embedding_model = SentenceTransformer(embedding_model)
-        self._embedding_dim = 384  # Dimension for all-MiniLM-L6-v2
+        self._embedding_model = embedding_model
+        self._embedding_dim = 1536  # Dimension for text-embedding-3-small
         
         logger.info(
             "memory_manager_initialized",
             qdrant_url=self.qdrant_url,
-            collection=self.collection_name
+            collection=self.collection_name,
+            embedding_model=embedding_model,
+            cloud_native=True
         )
     
     async def connect(self):
@@ -102,14 +114,14 @@ class MemoryManager:
         if not query:
             return []
         
-        # Generate query embedding
-        query_embedding = self._embed_text(query)
+        # Generate query embedding using cloud API
+        query_embedding = await self._embed_text(query)
         
         try:
             # Search with user_id filter
             results = self._client.search(
                 collection_name=self.collection_name,
-                query_vector=query_embedding.tolist(),
+                query_vector=query_embedding,
                 query_filter=Filter(
                     must=[
                         FieldCondition(
@@ -174,14 +186,14 @@ class MemoryManager:
             logger.warning("empty_summary_skipped", user_id=user_id)
             return
         
-        # Generate embedding
-        embedding = self._embed_text(summary)
+        # Generate embedding using cloud API
+        embedding = await self._embed_text(summary)
         
         # Create point
         point_id = str(uuid.uuid4())
         point = PointStruct(
             id=point_id,
-            vector=embedding.tolist(),
+            vector=embedding,
             payload={
                 "user_id": user_id,
                 "summary": summary,
@@ -211,17 +223,50 @@ class MemoryManager:
                 error=str(e)
             )
     
-    def _embed_text(self, text: str):
+    async def _embed_text(self, text: str) -> List[float]:
         """
-        Generates embedding using sentence-transformers.
+        Generates embedding using cloud API via LiteLLM.
+        
+        BRAIN TRANSPLANT: Uses Google's free, high-quality embedding model.
         
         Args:
             text: Text to embed
             
         Returns:
-            Numpy array of embeddings
+            List of embedding floats
         """
-        return self._embedding_model.encode(text, convert_to_numpy=True)
+        if not LITELLM_AVAILABLE:
+            logger.error("embedding_failed", reason="litellm_not_available")
+            return [0.0] * self._embedding_dim
+        
+        try:
+            # Use Google's free embedding model via LiteLLM
+            response = await embedding(
+                model="gemini/text-embedding-004",
+                input=[text],
+                api_key=os.getenv("GOOGLE_API_KEY")
+            )
+            
+            embedding_vector = response['data'][0]['embedding']
+            
+            logger.debug(
+                "cloud_embedding_generated",
+                text_length=len(text),
+                embedding_dim=len(embedding_vector),
+                model="gemini/text-embedding-004"
+            )
+            
+            return embedding_vector
+            
+        except Exception as e:
+            logger.error(
+                "cloud_embedding_failed",
+                error=str(e),
+                model=self._embedding_model,
+                fallback="zero_vector"
+            )
+            # Return zero vector as fallback
+            return [0.0] * self._embedding_dim
 
 
 # Global memory manager instance

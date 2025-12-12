@@ -8,12 +8,18 @@ env/
 venv/
 ENV/
 .venv
+build/
+dist/
+*.egg-info/
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
+tests/
+test_*.py
+*_test.py
 
 # IDE
 .vscode/
@@ -41,3 +47,29 @@ docs/
 # Misc
 *.log
 .DS_Store
+
+# Project specific - exclude from production image
+cortex.db
+cortex.db-journal
+*.db
+*.db-journal
+admin-ui/
+monitoring/
+.kiro/
+deploy*.bat
+start*.bat
+final_test.py
+generate-master-key.py
+keep-backend-alive.py
+verify_api_key.py
+create_*.py
+.hypothesis/
+pytest.ini
+
+# Development files
+README.md
+PHASE*.md
+*_COMPLETE.md
+*_GUIDE.md
+*_DEPLOYMENT.md
+*_SUMMARY.md

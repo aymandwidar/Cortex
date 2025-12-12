@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
     
     # Authentication
-    kirio_cortex_master_key: str = "dev-master-key-change-in-production"
+    kirio_cortex_master_key: str = "ad222333"
     
     # API Keys for upstream providers
     openai_api_key: str = ""

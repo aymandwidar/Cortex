@@ -1,0 +1,33 @@
+# Fly.io configuration for Cortex V2
+app = "cortex-v2"
+primary_region = "iad"
+
+[build]
+
+[env]
+  KIRIO_CORTEX_MASTER_KEY = "ad222333"
+  LITELLM_CONFIG_PATH = "config.yaml"
+  LOG_LEVEL = "INFO"
+  ALLOWED_ORIGINS = '["*"]'
+
+[http_service]
+  internal_port = 10000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[checks]
+  [checks.health]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/health"
+    port = 10000
+    timeout = "5s"

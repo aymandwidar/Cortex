@@ -160,7 +160,7 @@ class RequestPipeline:
                 
                 # V1 Semantic Routing (for backward compatibility)
                 if model == "legacy-auto":
-                    category = self.semantic_router.classify_intent(user_message)
+                    category = await self.semantic_router.classify_intent(user_message)
                     selected_model = self.semantic_router.select_model(category, sentiment_override)
                     
                     if sentiment_override:

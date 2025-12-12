@@ -1,10 +1,18 @@
 """Semantic routing for intent classification and model selection."""
 
+import os
 from enum import Enum
-from typing import Optional
-import numpy as np
-from sentence_transformers import SentenceTransformer
+from typing import Optional, List
 import structlog
+
+# BRAIN TRANSPLANT: Use LiteLLM for cloud embeddings instead of local models
+try:
+    from litellm import embedding
+    import numpy as np
+    LITELLM_AVAILABLE = True
+except ImportError:
+    logger.warning("litellm_not_available", message="Semantic routing disabled")
+    LITELLM_AVAILABLE = False
 
 logger = structlog.get_logger()
 
@@ -21,7 +29,7 @@ class SemanticRouter:
     """
     Classifies prompt intent and selects appropriate model tier.
     
-    Uses sentence-transformers for semantic similarity matching.
+    BRAIN TRANSPLANT: Uses cloud embeddings via LiteLLM for semantic similarity matching.
     """
     
     # Model mapping from category to LiteLLM model name
@@ -52,24 +60,23 @@ class SemanticRouter:
         ),
     }
     
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = "gemini/text-embedding-004"):
         """
-        Initialize semantic router with sentence transformer model.
+        Initialize semantic router with cloud embedding model.
         
         Args:
-            model_name: Name of the sentence-transformers model to use
+            model_name: Name of the cloud embedding model to use
         """
-        self._model = SentenceTransformer(model_name)
-        
-        # Pre-compute category embeddings
+        self._model_name = model_name
         self._category_embeddings = {}
-        for category, description in self.CATEGORY_DESCRIPTIONS.items():
-            embedding = self._model.encode(description, convert_to_numpy=True)
-            self._category_embeddings[category] = embedding
         
-        logger.info("semantic_router_initialized", model=model_name)
+        logger.info(
+            "semantic_router_initialized", 
+            model=model_name,
+            cloud_native=True
+        )
     
-    def classify_intent(self, prompt: str) -> IntentCategory:
+    async def classify_intent(self, prompt: str) -> IntentCategory:
         """
         Classifies prompt into one of the defined categories.
         
@@ -81,30 +88,44 @@ class SemanticRouter:
         Returns:
             IntentCategory enum value
         """
-        if not prompt:
+        if not LITELLM_AVAILABLE or not prompt:
             return IntentCategory.SIMPLE_CHAT
         
-        # Encode the prompt
-        prompt_embedding = self._model.encode(prompt, convert_to_numpy=True)
-        
-        # Calculate cosine similarity with each category
-        similarities = {}
-        for category, category_embedding in self._category_embeddings.items():
-            similarity = self._cosine_similarity(prompt_embedding, category_embedding)
-            similarities[category] = similarity
-        
-        # Select category with highest similarity
-        best_category = max(similarities, key=similarities.get)
-        best_score = similarities[best_category]
-        
-        logger.info(
-            "intent_classified",
-            category=best_category.value,
-            confidence=best_score,
-            prompt_length=len(prompt)
-        )
-        
-        return best_category
+        try:
+            # Lazy load category embeddings on first use
+            if not self._category_embeddings:
+                await self._precompute_category_embeddings()
+            
+            # Encode the prompt using cloud API
+            prompt_embedding = await self._get_cloud_embedding(prompt)
+            
+            # Calculate cosine similarity with each category
+            similarities = {}
+            for category, category_embedding in self._category_embeddings.items():
+                similarity = self._cosine_similarity(prompt_embedding, category_embedding)
+                similarities[category] = similarity
+            
+            # Select category with highest similarity
+            best_category = max(similarities, key=similarities.get)
+            best_score = similarities[best_category]
+            
+            logger.info(
+                "intent_classified",
+                category=best_category.value,
+                confidence=best_score,
+                prompt_length=len(prompt),
+                cloud_native=True
+            )
+            
+            return best_category
+            
+        except Exception as e:
+            logger.error(
+                "intent_classification_failed",
+                error=str(e),
+                fallback="SIMPLE_CHAT"
+            )
+            return IntentCategory.SIMPLE_CHAT
     
     def select_model(
         self,
@@ -137,8 +158,38 @@ class SemanticRouter:
         
         return model
     
+    async def _precompute_category_embeddings(self):
+        """Pre-compute embeddings for all category descriptions."""
+        for category, description in self.CATEGORY_DESCRIPTIONS.items():
+            embedding = await self._get_cloud_embedding(description)
+            self._category_embeddings[category] = embedding
+        
+        logger.info(
+            "category_embeddings_precomputed",
+            count=len(self._category_embeddings),
+            model=self._model_name
+        )
+    
+    async def _get_cloud_embedding(self, text: str) -> List[float]:
+        """
+        Get embedding from cloud API via LiteLLM.
+        
+        Args:
+            text: Text to embed
+            
+        Returns:
+            List of embedding floats
+        """
+        response = await embedding(
+            model=self._model_name,
+            input=[text],
+            api_key=os.getenv("GOOGLE_API_KEY")
+        )
+        
+        return response['data'][0]['embedding']
+    
     @staticmethod
-    def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    def _cosine_similarity(a: List[float], b: List[float]) -> float:
         """
         Calculate cosine similarity between two vectors.
         
@@ -149,4 +200,9 @@ class SemanticRouter:
         Returns:
             Cosine similarity score between -1 and 1
         """
-        return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+        if not LITELLM_AVAILABLE:
+            return 0.0
+            
+        a_np = np.array(a)
+        b_np = np.array(b)
+        return float(np.dot(a_np, b_np) / (np.linalg.norm(a_np) * np.linalg.norm(b_np)))

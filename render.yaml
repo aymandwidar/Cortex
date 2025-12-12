@@ -1,0 +1,28 @@
+# Render Blueprint for Cortex V2 Agentic System
+services:
+  - type: web
+    name: cortex-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn cortex.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: KIRIO_CORTEX_MASTER_KEY
+        value: ad222333
+      - key: LITELLM_CONFIG_PATH
+        value: config.yaml
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ALLOWED_ORIGINS
+        value: '["*"]'
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+databases:
+  - name: cortex-postgres
+    plan: free
+    databaseName: cortex
+    user: cortex
