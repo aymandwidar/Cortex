@@ -75,7 +75,8 @@ export default function Playground({ masterKey }: PlaygroundProps) {
       }
 
       // Create a new API key for the playground
-      const response = await fetch('/admin/v1/generate_key', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/admin/v1/generate_key`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${masterKey}`,
@@ -143,7 +144,8 @@ export default function Playground({ masterKey }: PlaygroundProps) {
         throw new Error('API key not initialized. Please refresh the page.')
       }
 
-      const response = await fetch('/v1/chat/completions', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/v1/chat/completions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -225,7 +227,8 @@ export default function Playground({ masterKey }: PlaygroundProps) {
       reader.readAsDataURL(audioBlob)
       reader.onloadend = async () => {
         
-        const response = await fetch('/v1/audio/transcriptions', {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+        const response = await fetch(`${API_BASE_URL}/v1/audio/transcriptions`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${masterKey}`
