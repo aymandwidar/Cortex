@@ -56,17 +56,63 @@ class Orchestrator:
         # Task classification patterns
         self.task_patterns = {
             TaskType.CODE_GENERATION: [
+                # Basic coding patterns
                 r"write.*code", r"implement.*function", r"create.*script",
                 r"debug.*code", r"fix.*bug", r"refactor", r"python.*code",
                 r"javascript.*code", r"sql.*query", r"algorithm",
                 r"function.*to", r"write.*function", r"create.*function",
-                r"fibonacci", r"factorial", r"sorting", r"programming"
+                r"fibonacci", r"factorial", r"sorting", r"programming",
+                
+                # Programming language keywords
+                r"python", r"javascript", r"java", r"c\+\+", r"c#", r"php", r"ruby",
+                r"go", r"rust", r"swift", r"kotlin", r"typescript", r"html", r"css",
+                
+                # Development tasks
+                r"build.*app", r"create.*program", r"develop", r"code.*for",
+                r"script.*to", r"program.*that", r"software", r"application",
+                r"web.*app", r"mobile.*app", r"api", r"database", r"backend",
+                r"frontend", r"full.*stack", r"framework", r"library",
+                
+                # Specific coding requests
+                r"class.*definition", r"method", r"variable", r"loop", r"condition",
+                r"if.*else", r"for.*loop", r"while.*loop", r"try.*catch",
+                r"import", r"package", r"module", r"namespace", r"object",
+                r"array", r"list", r"dictionary", r"hash", r"json", r"xml",
+                
+                # Problem-solving with code
+                r"automate", r"parse", r"extract", r"process.*data", r"convert",
+                r"transform", r"validate", r"authenticate", r"encrypt", r"decrypt",
+                r"compress", r"decompress", r"serialize", r"deserialize",
+                
+                # Development concepts
+                r"design.*pattern", r"mvc", r"rest.*api", r"graphql", r"microservice",
+                r"docker", r"kubernetes", r"ci/cd", r"git", r"version.*control",
+                r"test.*case", r"unit.*test", r"integration.*test", r"tdd", r"bdd"
             ],
             TaskType.MATH_CALCULATION: [
+                # Basic math patterns
                 r"calculate", r"solve.*equation", r"math.*problem",
                 r"derivative", r"integral", r"statistics", r"probability",
                 r"algebra", r"geometry", r"trigonometry", r"\d+.*\+.*\d+",
-                r"what.*is.*\d+.*[\+\-\*\/].*\d+"
+                r"what.*is.*\d+.*[\+\-\*\/].*\d+",
+                
+                # Business logic and optimization patterns
+                r"solve.*this", r"step.*by.*step", r"cost.*effective", r"cost-effective",
+                r"optimize", r"optimization", r"defect.*rate", r"percentage", r"percent",
+                r"total.*cost", r"production.*rate", r"profit", r"loss", r"revenue",
+                r"compare.*cost", r"versus", r"vs\.", r"which.*better", r"which.*cheaper",
+                r"budget", r"financial", r"economic", r"efficiency", r"productivity",
+                
+                # Manufacturing and business terms
+                r"manufacturing", r"production", r"quality.*control", r"defects",
+                r"units.*per", r"rate.*of", r"throughput", r"capacity", r"utilization",
+                r"break.*even", r"roi", r"return.*on.*investment", r"margin",
+                
+                # Problem-solving indicators
+                r"problem.*solving", r"word.*problem", r"scenario", r"situation",
+                r"given.*that", r"if.*then", r"assuming", r"suppose",
+                r"determine", r"find.*the", r"what.*would", r"how.*much",
+                r"how.*many", r"minimum", r"maximum", r"optimal", r"best.*option"
             ],
             TaskType.IMAGE_ANALYSIS: [
                 r"analyze.*image", r"what.*in.*image", r"describe.*picture",
@@ -74,7 +120,24 @@ class Orchestrator:
             ],
             TaskType.COMPLEX_REASONING: [
                 r"explain.*complex", r"analyze.*deeply", r"compare.*contrast",
-                r"pros.*cons", r"strategy", r"plan.*detailed", r"research"
+                r"pros.*cons", r"strategy", r"plan.*detailed", r"research",
+                
+                # System Design & Architecture (High Complexity)
+                r"architecture", r"system.*design", r"microservices", r"database.*design",
+                r"kubernetes", r"aws", r"deployment.*strategy", r"scalability", r"enterprise",
+                r"cloud.*architecture", r"distributed.*system", r"load.*balancing",
+                r"high.*availability", r"fault.*tolerance", r"disaster.*recovery",
+                r"infrastructure", r"devops", r"ci.*cd", r"containerization",
+                r"orchestration", r"service.*mesh", r"api.*gateway", r"message.*queue",
+                r"event.*driven", r"caching.*strategy", r"cdn", r"performance.*optimization",
+                r"security.*architecture", r"authentication.*system", r"authorization",
+                r"data.*pipeline", r"etl", r"big.*data", r"analytics.*platform",
+                r"monitoring.*system", r"logging.*architecture", r"observability",
+                
+                # Database and schema design (complex reasoning)
+                r"design.*database", r"design.*schema", r"schema.*design", r"data.*model",
+                r"entity.*relationship", r"erd", r"normalization", r"denormalization",
+                r"database.*architecture", r"data.*architecture"
             ]
         }
         
@@ -161,18 +224,81 @@ class Orchestrator:
             return await self._fallback_response(messages, user_id, request_id, **kwargs)
     
     async def _classify_task(self, user_message: str, has_image: bool) -> TaskType:
-        """Classify the user's request into a task type."""
+        """Classify the user's request into a task type with smart priority routing."""
         user_message_lower = user_message.lower()
         
         # Image analysis takes priority if image is present
         if has_image:
             return TaskType.IMAGE_ANALYSIS
         
-        # Check patterns for each task type
+        # Score each task type based on pattern matches
+        task_scores = {}
+        
         for task_type, patterns in self.task_patterns.items():
+            score = 0
+            matches = []
+            
             for pattern in patterns:
                 if re.search(pattern, user_message_lower):
-                    return task_type
+                    score += 1
+                    matches.append(pattern)
+            
+            if score > 0:
+                task_scores[task_type] = {
+                    'score': score,
+                    'matches': matches
+                }
+        
+        # If no patterns matched, default to simple chat
+        if not task_scores:
+            return TaskType.SIMPLE_CHAT
+        
+        # Find the task type with the highest score
+        best_task = max(task_scores.items(), key=lambda x: x[1]['score'])
+        best_task_type = best_task[0]
+        best_score = best_task[1]['score']
+        
+        logger.debug(
+            "task_classification_results",
+            user_message_preview=user_message[:100],
+            all_scores=task_scores,
+            selected_task=best_task_type,
+            selected_score=best_score
+        )
+        
+        # Apply priority rules for tie-breaking and special cases
+        
+        # PRIORITY 1: Math/Business Logic (if score >= 2 or specific high-value patterns)
+        if (best_task_type == TaskType.MATH_CALCULATION and best_score >= 2) or \
+           any(re.search(pattern, user_message_lower) for pattern in [
+               r"calculate", r"solve.*this", r"step.*by.*step", r"optimize", 
+               r"cost.*effective", r"defect.*rate", r"production.*rate",
+               r"total.*cost", r"profit", r"loss", r"percentage"
+           ]):
+            return TaskType.MATH_CALCULATION
+        
+        # PRIORITY 2: System Design & Architecture (takes precedence over coding)
+        if (best_task_type == TaskType.COMPLEX_REASONING and best_score >= 1) or \
+           any(re.search(pattern, user_message_lower) for pattern in [
+               r"architecture", r"system.*design", r"microservices", r"database.*design",
+               r"design.*database", r"design.*schema", r"schema.*design",
+               r"scalability", r"enterprise", r"infrastructure", r"deployment.*strategy",
+               r"kubernetes", r"aws", r"cloud.*architecture", r"distributed.*system"
+           ]):
+            return TaskType.COMPLEX_REASONING
+        
+        # PRIORITY 3: Code Generation (if score >= 2 or specific coding patterns)
+        if (best_task_type == TaskType.CODE_GENERATION and best_score >= 2) or \
+           any(re.search(pattern, user_message_lower) for pattern in [
+               r"write.*code", r"implement.*function", r"create.*script",
+               r"python", r"javascript", r"algorithm", r"program.*that",
+               r"function.*to", r"automate", r"build.*app"
+           ]):
+            return TaskType.CODE_GENERATION
+        
+        # If we have a clear winner with score >= 1, use it
+        if best_score >= 1:
+            return best_task_type
         
         # Default to simple chat
         return TaskType.SIMPLE_CHAT
