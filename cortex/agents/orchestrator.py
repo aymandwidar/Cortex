@@ -279,7 +279,7 @@ class Orchestrator:
                r"design.*database", r"design.*schema", r"schema.*design",
                r"scalability", r"enterprise", r"infrastructure", r"deployment.*strategy",
                r"kubernetes", r"aws", r"cloud.*architecture", r"distributed.*system",
-               r"riddle", r"puzzle", r"logic.*puzzle", r"water.*jug", r"analysis"
+               r"riddle", r"puzzle", r"logic.*puzzle", r"water.*jug", r"solve.*riddle", r"analysis"
            ]) or (best_task_type == TaskType.COMPLEX_REASONING and best_score >= 1):
             return TaskType.COMPLEX_REASONING
         
