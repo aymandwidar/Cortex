@@ -12,26 +12,26 @@ export default {
       },
       colors: {
         glass: {
-          50: 'rgba(255, 255, 255, 0.05)',
-          100: 'rgba(255, 255, 255, 0.10)',
-          200: 'rgba(255, 255, 255, 0.20)',
-          300: 'rgba(255, 255, 255, 0.30)',
-          400: 'rgba(255, 255, 255, 0.40)',
-          500: 'rgba(255, 255, 255, 0.50)',
+          50: 'rgba(255, 255, 255, 0.08)',
+          100: 'rgba(255, 255, 255, 0.15)',
+          200: 'rgba(255, 255, 255, 0.25)',
+          300: 'rgba(255, 255, 255, 0.35)',
+          400: 'rgba(255, 255, 255, 0.45)',
+          500: 'rgba(255, 255, 255, 0.55)',
           dark: {
-            50: 'rgba(0, 0, 0, 0.05)',
-            100: 'rgba(0, 0, 0, 0.10)',
-            200: 'rgba(0, 0, 0, 0.20)',
-            300: 'rgba(0, 0, 0, 0.30)',
-            400: 'rgba(0, 0, 0, 0.40)',
-            500: 'rgba(0, 0, 0, 0.50)',
+            50: 'rgba(0, 0, 0, 0.10)',
+            100: 'rgba(0, 0, 0, 0.20)',
+            200: 'rgba(0, 0, 0, 0.30)',
+            300: 'rgba(0, 0, 0, 0.40)',
+            400: 'rgba(0, 0, 0, 0.50)',
+            500: 'rgba(0, 0, 0, 0.60)',
           }
         },
         agent: {
-          logic: '#8B5CF6',    // Purple for DeepSeek
-          math: '#3B82F6',     // Blue for Qwen
-          code: '#10B981',     // Green for Llama Coding
-          chat: '#6B7280',     // Gray for Simple Chat
+          logic: '#A855F7',    // Brighter Purple for DeepSeek
+          math: '#06B6D4',     // Brighter Cyan for Qwen
+          code: '#10B981',     // Brighter Emerald for Llama Coding
+          chat: '#64748B',     // Brighter Slate for Simple Chat
         }
       },
       backdropBlur: {

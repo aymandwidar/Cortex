@@ -17,28 +17,28 @@ const agentConfig = {
     name: 'Logic Agent', 
     model: 'DeepSeek R1',
     color: 'agent-badge-logic',
-    gradient: 'from-purple-500/20 to-violet-600/20'
+    gradient: 'from-purple-500/30 to-violet-600/30 border-purple-400/50'
   },
   math: { 
     icon: Calculator, 
     name: 'Math Agent', 
     model: 'Qwen 2.5 72B',
     color: 'agent-badge-math',
-    gradient: 'from-blue-500/20 to-cyan-600/20'
+    gradient: 'from-cyan-500/30 to-blue-600/30 border-cyan-400/50'
   },
   code: { 
     icon: Code, 
     name: 'Code Agent', 
     model: 'Llama 3.3 70B',
     color: 'agent-badge-code',
-    gradient: 'from-green-500/20 to-emerald-600/20'
+    gradient: 'from-emerald-500/30 to-green-600/30 border-emerald-400/50'
   },
   chat: { 
     icon: MessageCircle, 
     name: 'Chat Agent', 
     model: 'Llama 3.1 8B',
     color: 'agent-badge-chat',
-    gradient: 'from-gray-500/20 to-slate-600/20'
+    gradient: 'from-slate-500/30 to-gray-600/30 border-slate-400/50'
   },
 }
 
@@ -86,11 +86,11 @@ export default function AgentCard({ message }: AgentCardProps) {
               {agent?.name || 'Assistant'}
             </span>
             {agent && (
-              <span className="text-white/50 text-xs">
+              <span className="text-white/80 text-xs font-medium">
                 {agent.model}
               </span>
             )}
-            <span className="text-white/40 text-xs">
+            <span className="text-white/60 text-xs">
               {message.timestamp.toLocaleTimeString()}
             </span>
           </div>
@@ -100,10 +100,10 @@ export default function AgentCard({ message }: AgentCardProps) {
         <div className={cn(
           "glass-card relative",
           isUser 
-            ? "bg-gradient-to-r from-indigo-500/20 to-purple-600/20 border-indigo-400/30" 
+            ? "bg-gradient-to-r from-indigo-500/25 to-purple-600/25 border-indigo-400/40" 
             : agent 
-              ? `bg-gradient-to-r ${agent.gradient} border-${agent.color.split('-')[2]}-400/30`
-              : ""
+              ? `bg-gradient-to-r ${agent.gradient}`
+              : "bg-gradient-to-r from-slate-500/25 to-gray-600/25 border-slate-400/40"
         )}>
           {/* Image */}
           {message.image && (

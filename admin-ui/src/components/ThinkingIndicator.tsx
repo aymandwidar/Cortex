@@ -7,31 +7,31 @@ const agentConfig = {
   logic: { 
     icon: Brain, 
     name: 'DeepSeek R1', 
-    color: 'text-purple-400',
+    color: 'text-purple-300',
     description: 'Deep reasoning in progress...'
   },
   math: { 
     icon: Calculator, 
     name: 'Qwen 2.5 72B', 
-    color: 'text-blue-400',
+    color: 'text-cyan-300',
     description: 'Calculating step by step...'
   },
   code: { 
     icon: Code, 
     name: 'Llama 3.3 70B', 
-    color: 'text-green-400',
+    color: 'text-emerald-300',
     description: 'Generating code solution...'
   },
   chat: { 
     icon: MessageCircle, 
     name: 'Llama 3.1 8B', 
-    color: 'text-gray-400',
+    color: 'text-slate-300',
     description: 'Thinking...'
   },
   auto: { 
     icon: Brain, 
     name: 'Auto-routing', 
-    color: 'text-indigo-400',
+    color: 'text-indigo-300',
     description: 'Selecting best agent...'
   }
 }
@@ -86,13 +86,13 @@ export default function ThinkingIndicator() {
 
       {/* Thinking Content */}
       <div className="flex-1">
-        <div className="glass-card bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-400/20">
+        <div className="glass-card bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border-purple-400/30">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 border border-purple-400/30 text-purple-100">
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/30 border border-purple-400/50 text-purple-100 shadow-lg">
                 {agent.name}
               </span>
-              <span className="text-white/50 text-xs">
+              <span className="text-white/80 text-xs font-medium">
                 {formatTime(elapsedTime)}
               </span>
             </div>
@@ -106,19 +106,19 @@ export default function ThinkingIndicator() {
                   key={i}
                   animate={{
                     scale: [1, 1.5, 1],
-                    opacity: [0.3, 1, 0.3]
+                    opacity: [0.4, 1, 0.4]
                   }}
                   transition={{
                     duration: 1.5,
                     repeat: Infinity,
                     delay: i * 0.2
                   }}
-                  className="w-2 h-2 bg-white/60 rounded-full"
+                  className="w-2 h-2 bg-white/80 rounded-full shadow-sm"
                 />
               ))}
             </div>
 
-            <span className="text-white/80 text-sm">
+            <span className="text-white font-medium text-sm">
               {agent.description}
             </span>
           </div>

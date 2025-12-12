@@ -24,15 +24,15 @@ function App() {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="glass-panel p-8 text-center"
+          className="glass-panel p-8 text-center shadow-2xl"
         >
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-2 border-white/20 border-t-white/60 rounded-full mx-auto mb-4"
+            className="w-12 h-12 border-3 border-white/30 border-t-white rounded-full mx-auto mb-4 shadow-lg"
           />
-          <h1 className="text-2xl font-bold text-white mb-2">CORTEX OS</h1>
-          <p className="text-white/70">Initializing Intelligence...</p>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">CORTEX OS</h1>
+          <p className="text-white/90 font-medium">Initializing Intelligence...</p>
         </motion.div>
       </div>
     )

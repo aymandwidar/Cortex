@@ -5,11 +5,11 @@ import { useAgent, type AgentType } from '../contexts/AgentContext'
 import { cn } from '../utils/cn'
 
 const agentOptions = [
-  { id: 'auto' as const, label: 'Auto Select', color: 'bg-gradient-to-r from-purple-500 to-blue-500' },
-  { id: 'logic' as const, label: 'Logic Agent', color: 'bg-purple-500' },
-  { id: 'math' as const, label: 'Math Agent', color: 'bg-blue-500' },
-  { id: 'code' as const, label: 'Code Agent', color: 'bg-green-500' },
-  { id: 'chat' as const, label: 'Chat Agent', color: 'bg-gray-500' },
+  { id: 'auto' as const, label: 'Auto Select', color: 'bg-gradient-to-r from-purple-500 to-cyan-500 shadow-lg' },
+  { id: 'logic' as const, label: 'Logic Agent', color: 'bg-purple-500 shadow-lg shadow-purple-500/25' },
+  { id: 'math' as const, label: 'Math Agent', color: 'bg-cyan-500 shadow-lg shadow-cyan-500/25' },
+  { id: 'code' as const, label: 'Code Agent', color: 'bg-emerald-500 shadow-lg shadow-emerald-500/25' },
+  { id: 'chat' as const, label: 'Chat Agent', color: 'bg-slate-500 shadow-lg shadow-slate-500/25' },
 ]
 
 export default function SmartInput() {
@@ -168,7 +168,7 @@ export default function SmartInput() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything..."
-            className="flex-1 bg-transparent text-white placeholder-white/50 outline-none px-2 py-2"
+            className="flex-1 bg-transparent text-white placeholder-white/70 outline-none px-2 py-2 font-medium"
             disabled={isThinking}
           />
 
