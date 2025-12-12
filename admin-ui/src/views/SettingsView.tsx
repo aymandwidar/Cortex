@@ -1,269 +1,222 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Key, Smartphone, Moon, Sun, Download, Trash2, Copy, Check } from 'lucide-react'
+import { Key, Copy, RefreshCw, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useTheme } from '../contexts/ThemeContext'
-import { useAgent } from '../contexts/AgentContext'
 
 export default function SettingsView() {
-  const { masterKey, apiKey, logout, generateApiKey } = useAuth()
-  const { theme, toggleTheme } = useTheme()
-  const { clearMessages } = useAgent()
-  const [isGeneratingKey, setIsGeneratingKey] = useState(false)
-  const [copiedKey, setCopiedKey] = useState(false)
-  const [qrCodeVisible, setQrCodeVisible] = useState(false)
+  const { masterKey, apiKey, generateApiKey } = useAuth()
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showMasterKey, setShowMasterKey] = useState(false)
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [copyStatus, setCopyStatus] = useState<string | null>(null)
 
-  const handleGenerateKey = async () => {
-    setIsGeneratingKey(true)
+  const handleGenerateApiKey = async () => {
+    setIsGenerating(true)
     try {
       await generateApiKey()
     } catch (error) {
-      console.error('Failed to generate key:', error)
+      console.error('Failed to generate API key:', error)
     } finally {
-      setIsGeneratingKey(false)
+      setIsGenerating(false)
     }
   }
 
-  const handleCopyKey = async () => {
-    if (apiKey) {
-      await navigator.clipboard.writeText(apiKey)
-      setCopiedKey(true)
-      setTimeout(() => setCopiedKey(false), 2000)
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyStatus(type)
+      setTimeout(() => setCopyStatus(null), 2000)
+    } catch (error) {
+      console.error('Failed to copy:', error)
     }
-  }
-
-  const generateQRCode = () => {
-    if (!apiKey) return ''
-    const connectionData = {
-      apiKey,
-      baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://cortex-v25-cloud-native.onrender.com',
-      name: 'Cortex OS'
-    }
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(JSON.stringify(connectionData))}`
   }
 
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="glass-nav border-b border-white/10 p-4">
-        <h1 className="text-xl font-semibold text-white">Settings</h1>
-        <p className="text-white/60 text-sm">Configure your Cortex OS experience</p>
+      <div className="pb-6 border-b border-white/5">
+        <div className="nano-label">System Configuration</div>
+        <h1 className="nano-title">Settings & API Keys</h1>
       </div>
-
+      
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* API Keys Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card"
-        >
+      <div className="flex-1 overflow-y-auto py-6 space-y-6">
+        
+        {/* Authentication Status */}
+        <div className="nano-panel p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Key size={24} className="text-white" />
-            <h2 className="text-lg font-semibold text-white">API Keys</h2>
+            <div className="halo-orb w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <CheckCircle size={20} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-medium">Authentication Status</h3>
+              <p className="text-white/60 text-sm">System is authenticated and ready</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Master Key Management */}
+        <div className="nano-panel p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="halo-orb w-8 h-8 bg-violet-500 rounded-lg flex items-center justify-center">
+              <Key size={20} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-medium">Master Key</h3>
+              <p className="text-white/60 text-sm">Administrative access credential</p>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {/* Master Key */}
-            <div>
-              <label className="block text-white/90 text-sm font-medium mb-2">
-                Master Key
-              </label>
-              <div className="glass-input bg-black/20 text-white/60 cursor-not-allowed">
-                {masterKey ? '••••••••••••••••' : 'Not set'}
+          <div className="space-y-3">
+            <div className="relative">
+              <input
+                type={showMasterKey ? 'text' : 'password'}
+                value={masterKey || ''}
+                readOnly
+                className="nano-input w-full pr-20"
+                placeholder="No master key set"
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex gap-2">
+                <button
+                  onClick={() => setShowMasterKey(!showMasterKey)}
+                  className="text-white/50 hover:text-white transition-colors"
+                >
+                  {showMasterKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                {masterKey && (
+                  <button
+                    onClick={() => copyToClipboard(masterKey, 'master')}
+                    className="text-white/50 hover:text-white transition-colors"
+                  >
+                    {copyStatus === 'master' ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                  </button>
+                )}
               </div>
-              <p className="text-white/50 text-xs mt-1">
-                Used for administrative access
-              </p>
             </div>
+          </div>
+        </div>
 
-            {/* API Key */}
-            <div>
-              <label className="block text-white/90 text-sm font-medium mb-2">
-                Client API Key
-              </label>
-              <div className="flex gap-2">
-                <div className="flex-1 glass-input bg-black/20 text-white/80 font-mono text-sm">
-                  {apiKey ? `${apiKey.substring(0, 20)}...` : 'No key generated'}
-                </div>
-                <button
-                  onClick={handleCopyKey}
-                  disabled={!apiKey}
-                  className="glass-button px-3 py-2 text-white disabled:opacity-50"
-                >
-                  {copiedKey ? <Check size={16} /> : <Copy size={16} />}
-                </button>
+        {/* API Key Management */}
+        <div className="nano-panel p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="halo-orb w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
+                <Key size={20} className="text-white" />
               </div>
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={handleGenerateKey}
-                  disabled={isGeneratingKey}
-                  className="glass-button px-4 py-2 text-white text-sm disabled:opacity-50"
-                >
-                  {isGeneratingKey ? 'Generating...' : 'Generate New Key'}
-                </button>
-                <button
-                  onClick={() => setQrCodeVisible(!qrCodeVisible)}
-                  disabled={!apiKey}
-                  className="glass-button px-4 py-2 text-white text-sm disabled:opacity-50"
-                >
-                  <Smartphone size={16} className="mr-2" />
-                  QR Code
-                </button>
+              <div>
+                <h3 className="text-white font-medium">API Key</h3>
+                <p className="text-white/60 text-sm">Required for agent routing and chat functionality</p>
               </div>
-              <p className="text-white/50 text-xs mt-1">
-                Used for mobile app connections and API access
-              </p>
             </div>
+            
+            <motion.button
+              onClick={handleGenerateApiKey}
+              disabled={isGenerating}
+              className="nano-button flex items-center gap-2 disabled:opacity-50"
+              whileTap={{ scale: 0.95 }}
+            >
+              {isGenerating ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={16} />
+                  <span>{apiKey ? 'Regenerate' : 'Generate'} Key</span>
+                </>
+              )}
+            </motion.button>
+          </div>
 
-            {/* QR Code */}
-            {qrCodeVisible && apiKey && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="glass-panel p-4 text-center"
-              >
-                <h3 className="text-white font-medium mb-3">Mobile Connection</h3>
-                <img
-                  src={generateQRCode()}
-                  alt="Connection QR Code"
-                  className="mx-auto rounded-lg"
+          <div className="space-y-3">
+            {apiKey ? (
+              <div className="relative">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={apiKey}
+                  readOnly
+                  className="nano-input w-full pr-20"
                 />
-                <p className="text-white/60 text-xs mt-2">
-                  Scan with mobile app to connect
-                </p>
-              </motion.div>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex gap-2">
+                  <button
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="text-white/50 hover:text-white transition-colors"
+                  >
+                    {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button
+                    onClick={() => copyToClipboard(apiKey, 'api')}
+                    className="text-white/50 hover:text-white transition-colors"
+                  >
+                    {copyStatus === 'api' ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="nano-panel p-4 bg-yellow-500/10 border-yellow-500/20">
+                <div className="flex items-center gap-2 text-yellow-300">
+                  <AlertCircle size={16} />
+                  <span className="text-sm">No API key generated. Click "Generate Key" to enable chat functionality.</span>
+                </div>
+              </div>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Appearance Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass-card"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            {theme === 'dark' ? <Moon size={24} className="text-white" /> : <Sun size={24} className="text-white" />}
-            <h2 className="text-lg font-semibold text-white">Appearance</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-white font-medium">Theme</div>
-                <div className="text-white/60 text-sm">Choose your preferred theme</div>
+        {/* System Information */}
+        <div className="nano-panel p-6">
+          <h3 className="text-white font-medium mb-4">System Information</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div className="text-white/60">Backend URL</div>
+              <div className="text-white font-mono text-xs">
+                {import.meta.env.VITE_API_BASE_URL || 'https://cortex-v25-cloud-native.onrender.com'}
               </div>
-              <button
-                onClick={toggleTheme}
-                className="glass-button px-4 py-2 text-white"
-              >
-                {theme === 'dark' ? (
-                  <>
-                    <Sun size={16} className="mr-2" />
-                    Light Mode
-                  </>
-                ) : (
-                  <>
-                    <Moon size={16} className="mr-2" />
-                    Dark Mode
-                  </>
-                )}
-              </button>
             </div>
-          </div>
-        </motion.div>
-
-        {/* Data Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass-card"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <Download size={24} className="text-white" />
-            <h2 className="text-lg font-semibold text-white">Data Management</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-white font-medium">Clear Chat History</div>
-                <div className="text-white/60 text-sm">Remove all conversation data</div>
-              </div>
-              <button
-                onClick={clearMessages}
-                className="glass-button px-4 py-2 text-red-400 hover:text-red-300"
-              >
-                <Trash2 size={16} className="mr-2" />
-                Clear All
-              </button>
+            <div>
+              <div className="text-white/60">Version</div>
+              <div className="text-white">Cortex OS v2.6</div>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-white font-medium">Export Data</div>
-                <div className="text-white/60 text-sm">Download your conversation history</div>
-              </div>
-              <button className="glass-button px-4 py-2 text-white">
-                <Download size={16} className="mr-2" />
-                Export
-              </button>
+            <div>
+              <div className="text-white/60">Authentication</div>
+              <div className="text-emerald-400">Active</div>
             </div>
-          </div>
-        </motion.div>
-
-        {/* System Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="glass-card"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <Settings size={24} className="text-white" />
-            <h2 className="text-lg font-semibold text-white">System Information</h2>
-          </div>
-
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-white/60">Version</span>
-              <span className="text-white">2.6.0</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Backend</span>
-              <span className="text-white">Cortex V2.6 Agentic</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Models</span>
-              <span className="text-white">DeepSeek R1, Qwen 2.5, Llama 3.3</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Status</span>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-green-400">Online</span>
+            <div>
+              <div className="text-white/60">API Status</div>
+              <div className={apiKey ? "text-emerald-400" : "text-yellow-400"}>
+                {apiKey ? "Ready" : "Needs Key"}
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Logout */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="pb-8"
-        >
-          <button
-            onClick={logout}
-            className="w-full glass-button py-3 text-red-400 hover:text-red-300 border-red-500/30"
-          >
-            Sign Out
-          </button>
-        </motion.div>
+        {/* Agent Configuration */}
+        <div className="nano-panel p-6">
+          <h3 className="text-white font-medium mb-4">Agent Configuration</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="nano-panel p-4 text-center">
+              <div className="halo-orb w-4 h-4 bg-purple-400 rounded-full mb-2 mx-auto"></div>
+              <div className="text-white font-medium text-sm">Logic Agent</div>
+              <div className="text-white/50 text-xs">DeepSeek R1</div>
+            </div>
+            <div className="nano-panel p-4 text-center">
+              <div className="halo-orb w-4 h-4 bg-cyan-400 rounded-full mb-2 mx-auto"></div>
+              <div className="text-white font-medium text-sm">Math Agent</div>
+              <div className="text-white/50 text-xs">Qwen 2.5 72B</div>
+            </div>
+            <div className="nano-panel p-4 text-center">
+              <div className="halo-orb w-4 h-4 bg-emerald-400 rounded-full mb-2 mx-auto"></div>
+              <div className="text-white font-medium text-sm">Code Agent</div>
+              <div className="text-white/50 text-xs">Llama 3.3 70B</div>
+            </div>
+            <div className="nano-panel p-4 text-center">
+              <div className="halo-orb w-4 h-4 bg-slate-400 rounded-full mb-2 mx-auto"></div>
+              <div className="text-white font-medium text-sm">Chat Agent</div>
+              <div className="text-white/50 text-xs">Llama 3.1 8B</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

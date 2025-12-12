@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     deepseek_api_key: str = ""
     anthropic_api_key: str = ""
+    openrouter_api_key: str = ""
     
     # Redis configuration
     redis_url: str = "redis://localhost:6379"

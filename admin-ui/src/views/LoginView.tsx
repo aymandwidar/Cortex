@@ -1,134 +1,109 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Lock, Eye, EyeOff, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Lock, Zap } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function LoginView() {
   const [masterKey, setMasterKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   const { login } = useAuth()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!masterKey.trim()) return
 
     setIsLoading(true)
-    setError('')
-
+    
     try {
-      await login(masterKey.trim())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed')
+      await login(masterKey)
+    } catch (error) {
+      console.error('Login failed:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="login-container">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="login-card"
       >
         {/* Logo */}
-        <div className="text-center mb-8">
-          <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="inline-block mb-4"
-          >
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-          </motion.div>
+        <div className="mb-8">
+          <div className="halo-orb w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Zap size={32} className="text-white" />
+          </div>
+          <div className="nano-label">Intelligence Operating System</div>
+          <h1 className="nano-title text-3xl">CORTEX OS</h1>
+        </div>
+
+        {/* Features */}
+        <div className="mb-8 space-y-4">
+          <div className="flex items-center gap-3 text-left">
+            <div className="halo-orb w-2 h-2 bg-red-400 rounded-full"></div>
+            <span className="text-white/80">Multi-Agent Intelligence</span>
+          </div>
+          <div className="text-white/60 text-sm">DeepSeek R1, Qwen 2.5, Llama 3.3</div>
           
-          <h1 className="text-4xl font-bold text-white mb-2">CORTEX OS</h1>
-          <p className="text-white/70">Intelligence Operating System</p>
+          <div className="flex items-center gap-3 text-left mt-4">
+            <div className="halo-orb w-2 h-2 bg-orange-400 rounded-full"></div>
+            <span className="text-white/80">Glassmorphic Design</span>
+          </div>
+          <div className="text-white/60 text-sm">Native iOS-inspired interface</div>
         </div>
 
         {/* Login Form */}
-        <motion.form
-          onSubmit={handleLogin}
-          className="glass-panel p-6 space-y-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-white/90 text-sm font-medium mb-2">
-              Master Key
-            </label>
+            <div className="nano-label text-left mb-3">Master Key</div>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
+              <Lock size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50" />
               <input
                 type={showKey ? 'text' : 'password'}
                 value={masterKey}
                 onChange={(e) => setMasterKey(e.target.value)}
                 placeholder="Enter your master key"
-                className="glass-input w-full pl-10 pr-12 text-white placeholder-white/50"
+                className="nano-input w-full pl-12 pr-12"
                 disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/70"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
               >
                 {showKey ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-red-200 text-sm"
-            >
-              {error}
-            </motion.div>
-          )}
-
-          <button
+          <motion.button
             type="submit"
             disabled={!masterKey.trim() || isLoading}
-            className="w-full glass-button py-3 px-6 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="nano-button w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            whileTap={{ scale: 0.98 }}
           >
             {isLoading ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Authenticating...
+                <span>Accessing System...</span>
               </div>
             ) : (
               'Access System'
             )}
-          </button>
+          </motion.button>
+        </form>
 
-          <div className="text-center text-white/60 text-sm">
-            <p>Default master key: <code className="bg-black/20 px-2 py-1 rounded">ad222333</code></p>
+        {/* Default Key Hint */}
+        <div className="mt-6 p-4 nano-panel">
+          <div className="text-white/60 text-sm">
+            <div className="font-medium mb-1">Default master key:</div>
+            <code className="text-violet-300">ad222333</code>
           </div>
-        </motion.form>
-
-        {/* Features */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 grid grid-cols-1 gap-4 text-center"
-        >
-          <div className="glass-panel p-4">
-            <h3 className="text-white font-medium mb-2">🧠 Multi-Agent Intelligence</h3>
-            <p className="text-white/70 text-sm">DeepSeek R1, Qwen 2.5, Llama 3.3</p>
-          </div>
-          
-          <div className="glass-panel p-4">
-            <h3 className="text-white font-medium mb-2">🎨 Glassmorphic Design</h3>
-            <p className="text-white/70 text-sm">Native iOS-inspired interface</p>
-          </div>
-        </motion.div>
+        </div>
       </motion.div>
     </div>
   )

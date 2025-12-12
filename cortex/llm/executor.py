@@ -39,6 +39,23 @@ class LiteLLMExecutor:
         
         logger.info("litellm_executor_initialized")
     
+    def get_openrouter_headers(self, api_key: str) -> Dict[str, str]:
+        """
+        Get OpenRouter-specific headers required for API calls.
+        
+        Args:
+            api_key: OpenRouter API key
+            
+        Returns:
+            Dictionary of headers
+        """
+        return {
+            "Authorization": f"Bearer {api_key}",
+            "HTTP-Referer": "https://cortex-os.vercel.app",  # Required by OpenRouter
+            "X-Title": "Cortex OS",  # Required by OpenRouter
+            "Content-Type": "application/json"
+        }
+    
     async def complete(
         self,
         messages: List[Dict[str, str]],
@@ -103,11 +120,37 @@ class LiteLLMExecutor:
                         message="No API key available for this model"
                     )
             
+            # HARD FIX: Force OpenRouter headers for OpenRouter models
+            if "openrouter" in actual_model.lower() or actual_model.startswith("openrouter/"):
+                api_key = kwargs.get('api_key')
+                if api_key:
+                    # Set OpenRouter-specific headers using LiteLLM's headers parameter
+                    openrouter_headers = {
+                        "HTTP-Referer": "https://cortex-os.vercel.app",
+                        "X-Title": "Cortex OS"
+                    }
+                    kwargs['headers'] = openrouter_headers
+                    
+                    logger.info(
+                        "openrouter_headers_forced",
+                        model=actual_model,
+                        headers_set=True,
+                        referer="https://cortex-os.vercel.app",
+                        headers=openrouter_headers
+                    )
+                else:
+                    logger.error(
+                        "openrouter_no_api_key",
+                        model=actual_model,
+                        message="OpenRouter model requires API key but none found"
+                    )
+                    raise Exception(f"OpenRouter API key required for model {actual_model}")
+            
             # Remove request_id from kwargs (not supported by all providers)
             # We use it for logging only
             kwargs.pop('request_id', None)
             
-            # Call LiteLLM with actual model name
+            # Call LiteLLM with actual model name and forced headers
             response = await litellm.acompletion(
                 model=actual_model,
                 messages=messages,
@@ -151,6 +194,10 @@ class LiteLLMExecutor:
             latency_ms = (time.time() - start_time) * 1000
             
             import traceback
+            
+            # Enhanced error logging for OpenRouter debugging
+            is_openrouter = "openrouter" in actual_model.lower() or actual_model.startswith("openrouter/")
+            
             logger.error(
                 "llm_request_failed",
                 model=model,
@@ -159,8 +206,22 @@ class LiteLLMExecutor:
                 latency_ms=latency_ms,
                 error=str(e),
                 error_type=type(e).__name__,
+                is_openrouter=is_openrouter,
+                has_api_key=bool(kwargs.get('api_key')),
+                has_extra_headers=bool(kwargs.get('extra_headers')),
                 traceback=traceback.format_exc()
             )
+            
+            # Special handling for OpenRouter errors
+            if is_openrouter:
+                logger.error(
+                    "openrouter_failure_details",
+                    model=actual_model,
+                    error_message=str(e),
+                    api_key_present=bool(kwargs.get('api_key')),
+                    headers_present=bool(kwargs.get('extra_headers')),
+                    suggestion="Check OpenRouter API key and required headers"
+                )
             
             raise
     
@@ -169,7 +230,7 @@ class LiteLLMExecutor:
         Extract provider from model name and get API key.
         
         Args:
-            model: Model name (e.g., "groq/llama-3.1-8b-instant", "gpt-4o")
+            model: Model name (e.g., "groq/llama-3.1-8b-instant", "openrouter/deepseek/deepseek-r1")
         
         Returns:
             API key or None
@@ -178,8 +239,18 @@ class LiteLLMExecutor:
         provider = None
         
         if "/" in model:
-            # Format: provider/model-name
-            provider = model.split("/")[0].lower()
+            # Format: provider/model-name or openrouter/provider/model-name
+            parts = model.split("/")
+            provider = parts[0].lower()
+            
+            # Special handling for OpenRouter models
+            if provider == "openrouter":
+                provider = "openrouter"
+                logger.debug(
+                    "openrouter_model_detected",
+                    model=model,
+                    provider="openrouter"
+                )
         else:
             # Infer provider from model name
             model_lower = model.lower()
@@ -195,8 +266,10 @@ class LiteLLMExecutor:
                 provider = "mistral"
             elif "llama" in model_lower and "groq" not in model_lower:
                 provider = "together"
-            elif "deepseek" in model_lower:
+            elif "deepseek" in model_lower and "openrouter" not in model_lower:
                 provider = "deepseek"
+            elif "qwen" in model_lower and "openrouter" not in model_lower:
+                provider = "qwen"
         
         if provider:
             api_key = await provider_key_manager.get_api_key(provider)
@@ -205,9 +278,23 @@ class LiteLLMExecutor:
                     "api_key_injected",
                     model=model,
                     provider=provider,
-                    source="provider_key_manager"
+                    source="provider_key_manager",
+                    key_length=len(api_key) if api_key else 0
                 )
                 return api_key
+            else:
+                logger.warning(
+                    "no_api_key_for_provider",
+                    model=model,
+                    provider=provider,
+                    message=f"No API key found for provider {provider}"
+                )
+        else:
+            logger.warning(
+                "provider_not_detected",
+                model=model,
+                message="Could not determine provider from model name"
+            )
         
         return None
     

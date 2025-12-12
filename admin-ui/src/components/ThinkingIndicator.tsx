@@ -86,13 +86,13 @@ export default function ThinkingIndicator() {
 
       {/* Thinking Content */}
       <div className="flex-1">
-        <div className="glass-card bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border-purple-400/30">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/30 border border-purple-400/50 text-purple-100 shadow-lg">
+        <div className="nano-panel p-6 bg-gradient-to-r from-purple-400/8 to-cyan-400/8 border-purple-400/15">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <span className="nano-badge-logic">
                 {agent.name}
               </span>
-              <span className="text-white/80 text-xs font-medium">
+              <span className="text-white/60 text-xs font-medium tracking-wide">
                 {formatTime(elapsedTime)}
               </span>
             </div>

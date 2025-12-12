@@ -21,7 +21,7 @@ export interface AgentContextType {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void
   clearMessages: () => void
   setThinking: (thinking: boolean, agent?: AgentType) => void
-  sendMessage: (content: string, forceAgent?: AgentType, image?: string) => Promise<void>
+  sendMessage: (content: string, forceAgent?: AgentType, image?: string, temperature?: number) => Promise<void>
 }
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined)
@@ -51,7 +51,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     setThinkingStartTime(thinking ? new Date() : null)
   }
 
-  const sendMessage = async (content: string, forceAgent?: AgentType, image?: string) => {
+  const sendMessage = async (content: string, forceAgent?: AgentType, image?: string, temperature: number = 0.7) => {
     // Add user message
     addMessage({
       role: 'user',
@@ -75,7 +75,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content }
         ],
-        temperature: 0.7,
+        temperature: temperature,
         max_tokens: 2000,
         user: 'cortex-os-user'
       }
