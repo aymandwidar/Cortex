@@ -1,0 +1,161 @@
+# Prometheus alerting rules for Cortex
+
+groups:
+  - name: cortex_alerts
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(cortex_requests_total{status="error"}[5m]) 
+            / 
+            rate(cortex_requests_total[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: cortex
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # High latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(cortex_request_duration_seconds_bucket[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: cortex
+        annotations:
+          summary: "High request latency detected"
+          description: "P95 latency is {{ $value }}s (threshold: 2s)"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job="cortex"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cortex
+        annotations:
+          summary: "Cortex service is down"
+          description: "Cortex has been down for more than 1 minute"
+
+      # High fallback rate
+      - alert: HighFallbackRate
+        expr: |
+          (
+            rate(cortex_fallback_attempts_total[5m])
+            /
+            rate(cortex_requests_total[5m])
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: cortex
+        annotations:
+          summary: "High fallback rate detected"
+          description: "Fallback rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_resident_memory_bytes{job="cortex"}
+            /
+            1024 / 1024 / 1024
+          ) > 3.5
+        for: 5m
+        labels:
+          severity: warning
+          component: cortex
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}GB (threshold: 3.5GB)"
+
+      # Sentiment override spike
+      - alert: SentimentOverrideSpike
+        expr: |
+          rate(cortex_sentiment_overrides_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: info
+          component: cortex
+        annotations:
+          summary: "High sentiment override rate"
+          description: "Sentiment overrides: {{ $value }}/s - users may be experiencing distress"
+
+      # PII detection spike
+      - alert: PIIDetectionSpike
+        expr: |
+          rate(cortex_pii_redactions_total[5m]) > 50
+        for: 5m
+        labels:
+          severity: info
+          component: cortex
+        annotations:
+          summary: "High PII detection rate"
+          description: "PII redactions: {{ $value }}/s - review data handling"
+
+      # Low cache hit rate
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            rate(cortex_cache_hits_total[5m])
+            /
+            (rate(cortex_cache_hits_total[5m]) + rate(cortex_cache_misses_total[5m]))
+          ) < 0.5
+        for: 10m
+        labels:
+          severity: info
+          component: cortex
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 50%)"
+
+      # API key validation failures
+      - alert: HighAPIKeyFailures
+        expr: |
+          rate(cortex_api_key_validations_total{status="invalid"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: cortex
+        annotations:
+          summary: "High API key validation failures"
+          description: "Invalid API key attempts: {{ $value }}/s - possible attack"
+
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% (threshold: 80%)"
+
+      # High disk usage
+      - alert: HighDiskUsage
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"}
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Low disk space"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"

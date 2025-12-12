@@ -1,0 +1,81 @@
+# Cloud Build configuration for CI/CD
+steps:
+  # Step 1: Install Node dependencies and build Admin UI
+  - name: 'node:18'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd admin-ui
+        npm ci
+        npm run build
+        cd ..
+    id: 'build-ui'
+
+  # Step 2: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.production'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/cortex:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/cortex:latest'
+      - '.'
+    id: 'build-image'
+    waitFor: ['build-ui']
+
+  # Step 3: Push the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/cortex:$COMMIT_SHA']
+    id: 'push-image-sha'
+    waitFor: ['build-image']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/cortex:latest']
+    id: 'push-image-latest'
+    waitFor: ['build-image']
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cortex'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/cortex:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--memory'
+      - '4Gi'
+      - '--cpu'
+      - '2'
+      - '--timeout'
+      - '300'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--set-secrets'
+      - 'KIRIO_CORTEX_MASTER_KEY=cortex-master-key:latest,OPENAI_API_KEY=openai-api-key:latest,GROQ_API_KEY=groq-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest'
+      - '--set-env-vars'
+      - 'ENVIRONMENT=production,LOG_LEVEL=INFO'
+    id: 'deploy-cloud-run'
+    waitFor: ['push-image-sha', 'push-image-latest']
+
+# Store images in Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/cortex:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/cortex:latest'
+
+# Build timeout
+timeout: '1200s'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY

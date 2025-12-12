@@ -1,0 +1,65 @@
+# Multi-stage build for Cortex with Admin UI
+# Stage 1: Build Admin UI
+FROM node:18-alpine as ui-builder
+
+WORKDIR /ui
+
+# Copy UI package files
+COPY admin-ui/package*.json ./
+RUN npm ci
+
+# Copy UI source and build
+COPY admin-ui/ ./
+RUN npm run build
+
+# Stage 2: Build Python dependencies
+FROM python:3.11-slim as python-builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 3: Final production image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=python-builder /root/.local /root/.local
+
+# Copy application code
+COPY cortex/ ./cortex/
+COPY config.yaml .
+
+# Copy built UI from ui-builder
+COPY --from=ui-builder /ui/dist ./static
+
+# Make sure scripts in .local are usable
+ENV PATH=/root/.local/bin:$PATH
+
+# Set production environment
+ENV ENVIRONMENT=production
+ENV PYTHONUNBUFFERED=1
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Run the application
+CMD ["uvicorn", "cortex.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]

@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Models (sentence-transformers cache)
+.cache/
+models/
+
+# Qdrant data
+qdrant_storage/
+
+# Redis dumps
+dump.rdb
+
+# Database files
+*.db
+cortex.db
+
+# Node modules (for admin-ui)
+node_modules/
+admin-ui/node_modules/
+admin-ui/dist/
+admin-ui/build/
+
+# Encryption keys
+.encryption_key
+
+# Test files (optional - you can remove this if you want to include tests)
+test_*.py
+*_test.py
+
+# Temporary files
+*.tmp
+*.temp
