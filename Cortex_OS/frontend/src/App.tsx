@@ -3,13 +3,73 @@ import { AuthProvider } from './contexts/AuthContext'
 import { AgentProvider } from './contexts/AgentContext'
 import DesktopLayout from './layouts/DesktopLayout'
 
-// --- Nano Glass CSS (Enhanced for full system) ---
-const glassStyles = `
-/* Base Nano Glass Styles */
-.nano-bg { 
-  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #020617 40%, #000000 100%); 
+// --- SELF-CONTAINED STYLES (Guarantees the look works) ---
+const nanoStyles = `
+body { 
+  margin: 0; 
+  background: #0f172a; 
+  font-family: system-ui, sans-serif; 
+  overflow: hidden; 
 }
 
+.nano-bg { 
+  position: fixed; 
+  inset: 0; 
+  z-index: 0;
+  background: radial-gradient(circle at 50% 0%, #312e81 0%, #0f172a 40%, #000000 100%);
+}
+
+.glass-island {
+  position: relative; 
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex; 
+  flex-direction: column;
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white; 
+  border-radius: 9999px; 
+  padding: 14px 24px; 
+  width: 100%; 
+  outline: none;
+}
+
+.glass-input:focus { 
+  border-color: #a78bfa; 
+  background: rgba(255, 255, 255, 0.1); 
+}
+
+.msg-bubble { 
+  max-width: 85%; 
+  padding: 12px 16px; 
+  font-size: 14px; 
+  line-height: 1.5; 
+}
+
+.msg-user { 
+  background: #4f46e5; 
+  color: white; 
+  border-radius: 18px 18px 4px 18px; 
+  align-self: flex-end; 
+}
+
+.msg-ai { 
+  background: rgba(255,255,255,0.08); 
+  color: #e2e8f0; 
+  border-radius: 18px 18px 18px 4px; 
+  align-self: flex-start; 
+}
+
+/* Enhanced Nano Glass Styles for Full System */
 .nano-panel { 
   background: rgba(255, 255, 255, 0.03); 
   backdrop-filter: blur(24px); 
@@ -23,22 +83,6 @@ const glassStyles = `
   backdrop-filter: blur(30px); 
   border: 1px solid rgba(255,255,255,0.1); 
   border-radius: 24px; 
-}
-
-.nano-input { 
-  background: rgba(255, 255, 255, 0.05); 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
-  color: white; 
-  border-radius: 16px; 
-  padding: 12px 16px; 
-  outline: none; 
-  transition: all 0.3s ease; 
-}
-
-.nano-input:focus { 
-  background: rgba(255, 255, 255, 0.1); 
-  border-color: rgba(139, 92, 246, 0.5); 
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); 
 }
 
 .nano-button {
@@ -99,25 +143,6 @@ const glassStyles = `
   border-radius: 32px;
   padding: 32px;
   box-shadow: 0 0 60px -10px rgba(255, 255, 255, 0.1);
-}
-
-/* Message Styles */
-.msg-user { 
-  background: rgba(79, 70, 229, 0.8); 
-  color: white; 
-  border-radius: 20px 20px 4px 20px; 
-  padding: 16px 20px;
-  max-width: 85%;
-  margin-left: auto;
-}
-
-.msg-ai { 
-  background: rgba(255, 255, 255, 0.05); 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
-  color: #e2e8f0; 
-  border-radius: 20px 20px 20px 4px; 
-  padding: 16px 20px;
-  max-width: 85%;
 }
 
 /* Scrollbar Styles */
@@ -183,20 +208,6 @@ const glassStyles = `
 @keyframes zoomIn {
   from { transform: scale(0.95); }
   to { transform: scale(1); }
-}
-
-/* Background Effects */
-body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-#root {
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #020617 40%, #000000 100%);
-  position: relative;
 }
 
 /* Login Styles */
@@ -289,6 +300,13 @@ body {
   pointer-events: none;
   z-index: 1;
 }
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #020617 40%, #000000 100%);
+  position: relative;
+}
 `;
 
 export default function App() {
@@ -296,7 +314,7 @@ export default function App() {
     <AuthProvider>
       <AgentProvider>
         <div className="w-full h-screen nano-bg text-white font-sans">
-          <style>{glassStyles}</style>
+          <style>{nanoStyles}</style>
           <DesktopLayout />
         </div>
       </AgentProvider>

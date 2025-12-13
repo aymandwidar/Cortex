@@ -1,337 +1,182 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Zap, Eye, EyeOff, Lock, Key, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react';
+import { Send, Camera, Settings, X, Sparkles } from 'lucide-react';
 
-// Nano Glass Styles
-const styles = `
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #020617 40%, #000000 100%);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+// --- SELF-CONTAINED STYLES (Guarantees the look works) ---
+const nanoStyles = `
+body { 
+  margin: 0; 
+  background: #0f172a; 
+  font-family: system-ui, sans-serif; 
+  overflow: hidden; 
+}
 
-  .nano-panel {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 32px;
-    box-shadow: 0 0 40px -10px rgba(255, 255, 255, 0.05);
-  }
+.nano-bg { 
+  position: fixed; 
+  inset: 0; 
+  z-index: 0;
+  background: radial-gradient(circle at 50% 0%, #312e81 0%, #0f172a 40%, #000000 100%);
+}
 
-  .nano-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 16px;
-    padding: 12px 16px;
-    outline: none;
-    transition: all 0.3s ease;
-    width: 100%;
-  }
+.glass-island {
+  position: relative; 
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex; 
+  flex-direction: column;
+}
 
-  .nano-input:focus {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
-  }
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white; 
+  border-radius: 9999px; 
+  padding: 14px 24px; 
+  width: 100%; 
+  outline: none;
+}
 
-  .nano-button {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 12px;
-    padding: 12px 24px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-  }
+.glass-input:focus { 
+  border-color: #a78bfa; 
+  background: rgba(255, 255, 255, 0.1); 
+}
 
-  .nano-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
+.msg-bubble { 
+  max-width: 85%; 
+  padding: 12px 16px; 
+  font-size: 14px; 
+  line-height: 1.5; 
+}
 
-  .nano-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+.msg-user { 
+  background: #4f46e5; 
+  color: white; 
+  border-radius: 18px 18px 4px 18px; 
+  align-self: flex-end; 
+}
 
-  .halo-orb {
-    box-shadow: 0 0 20px currentColor;
-  }
-`
+.msg-ai { 
+  background: rgba(255,255,255,0.08); 
+  color: #e2e8f0; 
+  border-radius: 18px 18px 18px 4px; 
+  align-self: flex-start; 
+}
+`;
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [masterKey, setMasterKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
-  const [apiKey, setApiKey] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
+interface Message { 
+  role: 'user' | 'assistant'; 
+  content: string; 
+  model?: string; 
+}
 
-  const handleLogin = () => {
-    if (masterKey === 'ad222333' || masterKey.length > 5) {
-      setIsLoggedIn(true)
-    }
-  }
+export default function App() {
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', content: 'Cortex OS Online. Nano-Glass Interface Loaded.', model: 'System' }
+  ]);
+  const [input, setInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const generateApiKey = () => {
-    setIsGenerating(true)
+  useEffect(() => { 
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); 
+  }, [messages]);
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    setMessages(p => [...p, { role: 'user', content: input }]);
+    setInput('');
     setTimeout(() => {
-      setApiKey(`ctx_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`)
-      setIsGenerating(false)
-    }, 1000)
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <>
-        <style>{styles}</style>
-        <div style={{ 
-          minHeight: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="nano-panel"
-            style={{ 
-              padding: '48px', 
-              maxWidth: '400px', 
-              width: '100%', 
-              textAlign: 'center' 
-            }}
-          >
-            <div className="halo-orb" style={{ 
-              width: '64px', 
-              height: '64px', 
-              background: 'linear-gradient(45deg, #8b5cf6, #a855f7)', 
-              borderRadius: '16px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              margin: '0 auto 24px',
-              color: 'white'
-            }}>
-              <Zap size={32} />
-            </div>
-            
-            <h1 style={{ 
-              fontSize: '32px', 
-              fontWeight: '300', 
-              letterSpacing: '0.1em', 
-              color: 'white', 
-              margin: '0 0 8px' 
-            }}>
-              CORTEX OS
-            </h1>
-            
-            <p style={{ 
-              fontSize: '12px', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.2em', 
-              color: 'rgba(255,255,255,0.4)', 
-              marginBottom: '32px' 
-            }}>
-              Intelligence Operating System
-            </p>
-
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ 
-                fontSize: '12px', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.2em', 
-                color: 'rgba(255,255,255,0.4)', 
-                marginBottom: '8px',
-                textAlign: 'left'
-              }}>
-                Master Key
-              </div>
-              <div style={{ position: 'relative' }}>
-                <Lock size={20} style={{ 
-                  position: 'absolute', 
-                  left: '16px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  color: 'rgba(255,255,255,0.5)' 
-                }} />
-                <input
-                  type={showKey ? 'text' : 'password'}
-                  value={masterKey}
-                  onChange={(e) => setMasterKey(e.target.value)}
-                  placeholder="Enter your master key"
-                  className="nano-input"
-                  style={{ paddingLeft: '48px', paddingRight: '48px' }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                />
-                <button
-                  onClick={() => setShowKey(!showKey)}
-                  style={{ 
-                    position: 'absolute', 
-                    right: '16px', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)', 
-                    background: 'none', 
-                    border: 'none', 
-                    color: 'rgba(255,255,255,0.5)', 
-                    cursor: 'pointer' 
-                  }}
-                >
-                  {showKey ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={handleLogin}
-              disabled={!masterKey.trim()}
-              className="nano-button"
-              style={{ width: '100%', marginBottom: '24px' }}
-            >
-              Access System
-            </button>
-
-            <div className="nano-panel" style={{ 
-              padding: '16px', 
-              background: 'rgba(255,255,255,0.02)' 
-            }}>
-              <div style={{ 
-                fontSize: '14px', 
-                color: 'rgba(255,255,255,0.6)' 
-              }}>
-                <div style={{ fontWeight: '500', marginBottom: '4px' }}>Default master key:</div>
-                <code style={{ color: '#a855f7' }}>ad222333</code>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </>
-    )
-  }
+      setMessages(p => [...p, { role: 'assistant', content: "Reasoning...", model: 'Orchestrator' }]);
+    }, 600);
+  };
 
   return (
     <>
-      <style>{styles}</style>
-      <div style={{ 
-        minHeight: '100vh', 
-        padding: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="nano-panel"
-          style={{ 
-            padding: '48px', 
-            maxWidth: '600px', 
-            width: '100%'
-          }}
-        >
-          <h1 style={{ 
-            fontSize: '32px', 
-            fontWeight: '300', 
-            letterSpacing: '0.1em', 
-            color: 'white', 
-            margin: '0 0 32px',
-            textAlign: 'center'
-          }}>
-            🎉 CORTEX OS WORKING!
-          </h1>
+      <style>{nanoStyles}</style>
+      <div className="nano-bg flex items-center justify-center h-screen w-screen p-4 md:p-6">
+        {/* The Floating Island */}
+        <main className="glass-island w-full max-w-lg h-full md:h-[85vh]">
+          {/* Header */}
+          <header className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_#4ade80]" />
+              <h1 className="text-sm font-bold tracking-[0.2em] text-white/90 uppercase">Cortex OS</h1>
+            </div>
+            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-white/10 rounded-full transition text-white">
+              <Settings size={18} />
+            </button>
+          </header>
 
-          <div className="nano-panel" style={{ 
-            padding: '24px', 
-            marginBottom: '24px',
-            background: 'rgba(34, 197, 94, 0.1)',
-            borderColor: 'rgba(34, 197, 94, 0.2)'
-          }}>
-            <h3 style={{ 
-              color: 'white', 
-              margin: '0 0 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <Key size={20} style={{ color: '#22c55e' }} />
-              API Key Generator
-            </h3>
-            
-            {apiKey ? (
-              <div>
-                <div style={{ 
-                  background: 'rgba(0,0,0,0.4)', 
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  marginBottom: '12px',
-                  fontFamily: 'monospace',
-                  fontSize: '14px',
-                  color: '#22c55e',
-                  wordBreak: 'break-all'
-                }}>
-                  {apiKey}
+          {/* Chat Stream */}
+          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+            {messages.map((m, i) => (
+              <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={m.role === 'user' ? 'msg-bubble msg-user' : 'msg-bubble msg-ai'}>
+                  {m.content}
                 </div>
-                <p style={{ 
-                  fontSize: '12px', 
-                  color: 'rgba(255,255,255,0.6)', 
-                  margin: 0 
-                }}>
-                  ✅ API key generated successfully!
-                </p>
-              </div>
-            ) : (
-              <button
-                onClick={generateApiKey}
-                disabled={isGenerating}
-                className="nano-button"
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px',
-                  margin: 0
-                }}
-              >
-                {isGenerating ? (
-                  <>
-                    <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Key size={16} />
-                    Generate API Key
-                  </>
+                {m.role === 'assistant' && (
+                  <span className="text-[10px] text-white/40 mt-1 ml-2 uppercase flex items-center gap-1">
+                    <Sparkles size={8} /> {m.model}
+                  </span>
                 )}
+              </div>
+            ))}
+            <div ref={scrollRef} />
+          </div>
+
+          {/* Input Dock */}
+          <div className="p-4 bg-gradient-to-t from-black/40 to-transparent">
+            <div className="flex items-center gap-2 relative">
+              <button className="p-3 bg-white/5 rounded-full text-white/60 hover:text-white transition">
+                <Camera size={20}/>
               </button>
-            )}
+              <div className="flex-1 relative">
+                <input 
+                  className="glass-input" 
+                  placeholder="Ask Cortex..." 
+                  value={input} 
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSend()}
+                />
+                <button 
+                  onClick={handleSend} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-full transition shadow-lg shadow-indigo-500/40"
+                >
+                  <Send size={16} className="text-white" />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div style={{ 
-            textAlign: 'center', 
-            color: 'rgba(255,255,255,0.6)',
-            fontSize: '14px'
-          }}>
-            <p>✅ Frontend: Working perfectly</p>
-            <p>🔧 Backend: Ready for connection</p>
-            <p>🎨 Nano Glass Design: Applied</p>
-            <p>🚀 Ready for development!</p>
-          </div>
-        </motion.div>
+          {/* Settings Overlay */}
+          {showSettings && (
+            <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+              <div className="w-full max-w-sm p-6 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl">
+                <div className="flex justify-between mb-6">
+                  <h2 className="text-white font-bold">System</h2>
+                  <button onClick={() => setShowSettings(false)} className="text-white">
+                    <X size={20}/>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="p-3 bg-white/5 rounded border border-white/5">
+                    <div className="text-xs text-gray-400 mb-1 uppercase">Logic Core</div>
+                    <div className="text-purple-300 text-sm font-mono">DeepSeek R1</div>
+                  </div>
+                  <button className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm tracking-wide">
+                    GENERATE APP KEY
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </>
-  )
+  );
 }
-
-export default App
