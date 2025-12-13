@@ -1,0 +1,141 @@
+# Cortex V2 Agentic System Configuration
+# Orchestrator-Worker Architecture with Specialized Agents
+# API keys are injected dynamically from Settings page (database) or environment variables
+
+# V1 Legacy Models (for backward compatibility)
+model_list:
+  - model_name: reflex-model
+    litellm_params:
+      model: groq/llama-3.1-8b-instant
+    model_info:
+      mode: chat
+      supports_function_calling: true
+      description: "Fast responses - Groq Llama 3.1 8B (FREE)"
+    fallbacks:
+      - model: groq/llama-3.1-70b-versatile
+
+  - model_name: analyst-model
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+    model_info:
+      mode: chat
+      supports_function_calling: true
+      description: "Code & Analysis - Groq Llama 3.3 70B (FREE)"
+    fallbacks:
+      - model: groq/llama-3.1-8b-instant
+
+  - model_name: genius-model
+    litellm_params:
+      model: gemini/gemini-pro
+    model_info:
+      mode: chat
+      supports_function_calling: true
+      description: "Complex Reasoning - Google Gemini Pro (FREE)"
+    fallbacks:
+      - model: groq/llama-3.1-70b-versatile
+
+# V2 Agentic System - SPECIALIST DREAM STACK
+agentic_models:
+  # The Manager - Fast task breakdown and orchestration
+  orchestrator:
+    model: groq/llama-3.1-8b-instant
+    provider: groq
+    role: "Task orchestration and planning"
+    description: "Speed-optimized for breaking down complex tasks"
+    max_tokens: 1000
+    temperature: 0.3
+    
+  # 2. The Logic/Architecture Specialist (DeepSeek R1 - 671B reasoning model)
+  worker_logic:
+    model: "openrouter/deepseek/deepseek-r1"
+    provider: "openrouter"
+    role: "Deep Reasoning"
+    description: "DeepSeek R1 - The 671B reasoning model for system architecture and complex logic"
+    max_tokens: 4000
+    temperature: 0.1
+    supports_tools: true
+    fallbacks:
+      - model: groq/llama-3.3-70b-versatile
+    
+  # 3. The Math Specialist (Qwen 2.5 72B - Math specialist)
+  worker_math:
+    model: "openrouter/qwen/qwen-2.5-72b-instruct"
+    provider: "openrouter"
+    role: "Math Optimization"
+    description: "Qwen 2.5 72B - The Math specialist for superior mathematical reasoning"
+    max_tokens: 3000
+    temperature: 0.0
+    supports_tools: true
+    fallbacks:
+      - model: groq/llama-3.3-70b-versatile
+      
+  # The Standard Coder - Fast & Reliable Code Generation
+  worker_analyst:
+    model: groq/llama-3.3-70b-versatile
+    provider: groq
+    role: "Standard code generation and debugging"
+    description: "Groq Llama 3.3 70B - Excellent for Python/JS/React with fast inference"
+    max_tokens: 4000
+    temperature: 0.1
+    supports_tools: true
+    fallbacks:
+      - model: groq/llama-3.1-8b-instant
+      
+  # The Reflex Agent - Ultra-fast Simple Chat
+  worker_reflex:
+    model: groq/llama-3.1-8b-instant
+    provider: groq
+    role: "Simple chat and quick responses"
+    description: "Ultra-fast Llama 8B for simple conversations and UI interactions"
+    max_tokens: 1000
+    temperature: 0.7
+    fallbacks:
+      - model: groq/llama-3.3-70b-versatile
+    
+  # The Eye (Pro) - Complex image analysis
+  worker_vision_pro:
+    model: gemini-2.0-flash-exp
+    provider: google
+    role: "Advanced image analysis and OCR"
+    description: "Complex image analysis, handwriting recognition, detailed visual tasks"
+    max_tokens: 2000
+    temperature: 0.2
+    supports_vision: true
+    
+  # The Eye (Fast) - High-volume image processing
+  worker_vision_fast:
+    model: llama-3.2-11b-vision-preview
+    provider: groq
+    role: "Fast image processing"
+    description: "High-volume image processing for simple visual tasks"
+    max_tokens: 1000
+    temperature: 0.3
+    supports_vision: true
+
+# Agentic System Configuration
+agentic_config:
+  max_steps: 10
+  max_retries: 3
+  timeout_seconds: 300
+  
+  # Tool execution settings
+  tools:
+    execute_python:
+      enabled: true
+      timeout: 30
+      sandbox: true
+    web_search:
+      enabled: false  # Placeholder for future
+    calculate:
+      enabled: true
+      
+  # Vision processing settings
+  vision:
+    complexity_keywords: ["analyze text", "handwriting", "details", "OCR", "read", "transcribe"]
+    max_image_size: "10MB"
+    supported_formats: ["jpg", "jpeg", "png", "gif", "webp"]
+
+# General settings
+general_settings:
+  master_key: os.environ/KIRIO_CORTEX_MASTER_KEY
+  database_url: null
