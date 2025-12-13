@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, Camera, Mic, Settings, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Camera, Settings, X } from 'lucide-react';
 
 interface Message { 
   role: 'user' | 'assistant'; 
