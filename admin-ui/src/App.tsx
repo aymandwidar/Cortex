@@ -1,135 +1,136 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, Zap, Brain } from 'lucide-react';
+import { Send, Camera, Mic, Settings, X } from 'lucide-react';
+
+interface Message { 
+  role: 'user' | 'assistant'; 
+  content: string; 
+  model?: string; 
+}
 
 export default function App() {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Welcome to Cortex AI. How can I help you today?', agent: 'System' }
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', content: 'Cortex OS Online. Ready.', model: 'System' }
   ]);
   const [input, setInput] = useState('');
-  const [isThinking, setIsThinking] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const bottomRef = useRef(null);
-  
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Auto-scroll
+  useEffect(() => { 
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); 
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || isThinking) return;
-    
-    const userMessage = { role: 'user', content: input, agent: 'You' };
-    setMessages(prev => [...prev, userMessage]);
+    if (!input.trim()) return;
+    setMessages(p => [...p, { role: 'user', content: input }]);
     setInput('');
-    setIsThinking(true);
     
-    // Simulate AI response
+    // Simulate Response
     setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'I understand your request. Let me process that for you...',
-        agent: 'Cortex AI'
+      setMessages(p => [...p, { 
+        role: 'assistant', 
+        content: "Processing...", 
+        model: 'Orchestrator' 
       }]);
-      setIsThinking(false);
-    }, 1500);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    }, 600);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      {/* Floating Island Container */}
-      <div className="nano-card w-full max-w-4xl h-[80vh] flex flex-col p-8">
+    <div className="relative w-full h-screen flex flex-col items-center justify-center p-0 md:p-6 text-white overflow-hidden">
+      {/* 1. Main Glass Container */}
+      <main className="nano-card w-full max-w-lg h-full md:h-[90vh] flex flex-col relative overflow-hidden shadow-2xl">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-              <Brain size={16} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-light text-white">Cortex AI</h1>
-              <p className="text-sm text-white/60">Intelligent Assistant</p>
-            </div>
-          </div>
-          
+        <header className="p-4 flex justify-between items-center border-b border-white/5 bg-white/5 backdrop-blur-md z-10">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-white/60">Online</span>
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <h1 className="text-sm font-bold tracking-widest uppercase">Cortex OS</h1>
           </div>
-        </div>
+          <button 
+            onClick={() => setShowSettings(true)} 
+            className="p-2 hover:bg-white/10 rounded-full transition"
+          >
+            <Settings size={20} className="text-white/70" />
+          </button>
+        </header>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto space-y-6 mb-6 pr-2">
-          {messages.map((message, index) => (
-            <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] ${
-                message.role === 'user' 
-                  ? 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30' 
-                  : 'bg-white/5 border border-white/10'
-              } rounded-2xl p-4 backdrop-blur-sm`}>
-                <div className="flex items-center gap-2 mb-2">
-                  {message.role === 'assistant' && (
-                    <Sparkles size={14} className="text-purple-400" />
-                  )}
-                  <span className="text-xs text-white/60 font-medium">
-                    {message.agent}
-                  </span>
-                </div>
-                <p className="text-white/90 leading-relaxed">
-                  {message.content}
-                </p>
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`max-w-[85%] p-4 text-sm leading-relaxed ${
+                m.role === 'user' 
+                  ? 'bg-indigo-600 text-white rounded-2xl rounded-br-sm' 
+                  : 'bg-white/10 text-gray-100 rounded-2xl rounded-bl-sm border border-white/5'
+              }`}>
+                {m.content}
               </div>
+              {m.role === 'assistant' && (
+                <span className="text-[10px] text-white/30 mt-1 ml-1 uppercase">
+                  {m.model}
+                </span>
+              )}
             </div>
           ))}
-          
-          {isThinking && (
-            <div className="flex justify-start">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap size={14} className="text-blue-400 animate-pulse" />
-                  <span className="text-xs text-white/60 font-medium">Cortex AI</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-white/60">Thinking</span>
-                  <div className="flex gap-1">
-                    <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-                    <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-                    <div className="w-1 h-1 bg-white/60 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div ref={bottomRef} />
+          <div ref={scrollRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="relative">
-          <textarea
-            className="nano-input resize-none pr-12"
-            placeholder="Ask me anything..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            rows={1}
-            style={{ minHeight: '52px', maxHeight: '120px' }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isThinking}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
-          >
-            <Send size={14} className="text-white" />
-          </button>
+        {/* Floating Input Dock */}
+        <div className="p-4 bg-gradient-to-t from-black/80 to-transparent z-10">
+          <div className="flex items-center gap-2">
+            <button className="p-3 bg-white/5 rounded-full text-white/50 hover:text-white">
+              <Camera size={20}/>
+            </button>
+            <div className="flex-1 relative">
+              <input 
+                className="nano-input" 
+                placeholder="Ask anything..." 
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+              />
+              <button 
+                onClick={handleSend} 
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-500 rounded-full"
+              >
+                <Send size={16} className="text-white" />
+              </button>
+            </div>
+          </div>
         </div>
-        
-      </div>
+
+        {/* Settings Modal */}
+        {showSettings && (
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-6">
+            <div className="nano-card w-full max-w-sm p-6 bg-slate-900">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-bold">System</h2>
+                <button onClick={() => setShowSettings(false)}>
+                  <X size={20}/>
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <h3 className="text-xs uppercase text-gray-400 mb-2">Active Agents</h3>
+                  <div className="flex flex-col gap-2 text-xs text-gray-300">
+                    <div className="flex justify-between">
+                      <span>Logic</span> 
+                      <span className="text-purple-300">DeepSeek R1</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Math</span> 
+                      <span className="text-blue-300">Qwen 2.5</span>
+                    </div>
+                  </div>
+                </div>
+                <button className="w-full py-3 bg-indigo-600 rounded-xl font-bold text-sm">
+                  Generate App Key
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
